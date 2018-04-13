@@ -16,9 +16,14 @@ const assert = require('assert')
 const logfile = 'crawler_aoe.log'
 
 const targetGallery = 'aoegame'
-const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&page=`
+
+//too much data from below address
+//const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&page=`
+
+//limited data amount by redirecting to different URL
+const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
 const pageMin = 1
-const pageMax = 3
+const pageMax = 10
 //!!!detrimental for RAM consumption & performance
 const windowMax = 7 //maximum chrome window opened at once
 
@@ -60,7 +65,7 @@ async function scrapePage(browser,targetUrl,pageNo){
   await page.goto(targetUrl + pageNo)
   //below is not really necessary
   //await page.waitForSelector('.t_subject > a')
-  logg(`...ready to scrape the page!`)
+  logg(`...ready to scrape the page ${pageNo} !`)
   
   //due to an unknown bug, this data has to be processed by filter.
   //the program can't recognize any variables inside the forEach/map
@@ -92,7 +97,9 @@ async function scrapePage(browser,targetUrl,pageNo){
   //convert data into object style
   let convertedTitles = {}
   titles.map(el=>{
-    convertedTitles[/&no=(\d+)/g.exec(el.href)[1]] = el
+    logg(`scraped address - ${el.href}`)
+    const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
+    if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
   })
   await page.close()
   return new Promise((resolve,reject)=>resolve(convertedTitles))
@@ -105,6 +112,7 @@ async function scrapePage(browser,targetUrl,pageNo){
 
 //----------scrape single article element
 async function scrapeArticle(browser,articleUrl,articleId){
+  logg(`scraping article(${articleId}) from - ${articleUrl}`)
   const page = await browser.newPage()
   //multiple async page loading time gets exponentially bigger,
   //creates timeout rejection
@@ -113,15 +121,8 @@ async function scrapeArticle(browser,articleUrl,articleId){
   let paragraphs = await page.evaluate((selector)=>
     [...document.querySelectorAll(selector)].map(el=>
   el.innerText),'.s_write p, .s_write div')
-    if (paragraphs.length > 1) {
-    paragraphs = paragraphs.reduce((pv,cv)=>{
-      if(cv != '\n' && cv != ''){
-        return pv + ' ' + cv
-      }else{
-        return pv
-      }
-    })
-    paragraphs = paragraphs.toLowerCase().replace('dc official app','').replace(/[\n\r]/g,' ')
+  if (paragraphs.length > 1) {
+    paragraphs = paragraphs.join(' ').toLowerCase().replace('dc official app','').replace(/[\n\r]/g,' ')
   }else{
     paragraphs = ''
   }
@@ -164,14 +165,29 @@ async function bootup(){
 
   //here every iteration with await must be written as 'for'
   //map, filter, foreach etc are not allowed for await iteration
+  let countLimit = 0
+  let pageScrapePlan = []
   for(let i=pageMin;i<=pageMax;i++){
-    scraped = {...scraped,...await scrapePage(browser,targetUrl,i)}
+    //scraped = {...scraped,...await scrapePage(browser,targetUrl,i)}
+    pageScrapePlan.push(scrapePage(browser,targetUrl,i))
+    countLimit++
+    if(countLimit === windowMax || i === pageMax) {
+      //if the counter reaches the maximum number of windows, run scraping at once
+      let resPage = await Promise.all(pageScrapePlan)
+      resPage.map(elScrappedFromPage=>{
+        scraped = {...scraped,...elScrappedFromPage}
+      })
+
+      pageScrapePlan = []
+    }
   }
-  
+
   //multiple articles are scraped at once
   const scrapedKeys = Object.keys(scraped)
   for(let i=0;i< scrapedKeys.length / windowMax;i++){
+
     logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length}`)
+
     let scrapePlan = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax).map(el=>{
       return scrapeArticle(browser,scraped[el].href,el)
     })
