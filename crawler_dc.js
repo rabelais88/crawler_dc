@@ -22,7 +22,6 @@ const pageMax = 3
 //!!!detrimental for RAM consumption & performance
 const windowMax = 7 //maximum chrome window opened at once
 
-// lgr stands for logger
 // we'll write down a log into a log file
 // we're dealing with large amount of I/O
 // this is for winston rc3.0.0 above 
@@ -189,6 +188,7 @@ async function bootup(){
 
   }
   await browser.close()
+  await db.close()
 
 }
 

@@ -10,6 +10,25 @@ const MongoCollection = 'crawler_aoe'
 
 const assert = require('assert')
 
+const logfile = 'analyzer.log'
+const winston = require('winston')
+const moment = require('moment')
+
+const logger = winston.createLogger({
+  transports:[
+    new winston.transports.File({ filename: logfile}),
+    new winston.transports.Console()
+  ]
+})
+
+function logg(msg){
+  logger.log('info',msg)
+}
+
+function warnn(msg){
+  logger.log('warn',msg)
+}
+
 const getDB = () =>
   new Promise((resolve,reject)=>{
     MongoClient.connect(MongoUrl,(err,client)=>{
@@ -60,11 +79,10 @@ async function bootup(){
   let analyzed = []
   //iterate through all db articles...
   db.collection(MongoCollection).find().forEach(el=>{
+    console.log(el)
     analyzed.push(analyzeText(el.content))
     console.log(analyzed[analyzed.length-1])
   })
-
-  
   
 }
 
