@@ -73,7 +73,8 @@ async function bootup(){
   let db = await getDB() //receives mongodb
   
 
-  let wordsAmount = {}
+  let wordsAmountAllPeriod = {}
+  let wordsAmountYM = {} //year and month
   //iterate through all db articles...
   db.collection(MongoCollection).find().forEach(el=>{
     console.log(el)
@@ -83,11 +84,25 @@ async function bootup(){
     //let's find out the word amount
     let wordWeight = {}
     analyzed.map(word=>{
-      if(wordsAmount[word]){
-        wordsAmount[word] ++
+
+      //aggregate all datas
+      if(wordsAmountAllPeriod[word]){
+        wordsAmountAllPeriod[word] ++
       }else{
-        wordsAmount[word] = 1
+        wordsAmountAllPeriod[word] = 1
       }
+
+      //aggregate per year-month based timeline
+      let targetPeriod = /(\d{4}\.\d{2})\.\d{2}/g.exec(el.date)[1]
+      if(!wordsAmountYM[targetPeriod]){
+        wordsAmountYM[targetPeriod] = {}
+      }
+      if(wordsAmountYM[targetPeriod][word]){
+        wordsAmountYM[targetPeriod][word]++
+      }else{
+        wordsAmountYM[targetPeriod][word] = 1
+      }
+
     })
   })
   
