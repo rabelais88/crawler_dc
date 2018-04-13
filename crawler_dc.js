@@ -89,9 +89,15 @@ async function scrapePage(browser,targetUrl,pageNo){
       return { author: el.innerText}})
   }, '.user_nick_nm')
 
+  let dates = await page.evaluate((selector)=>{
+    return [...document.querySelectorAll(selector)].map(el=>{
+      return { date: el.innerText}
+    })
+  }, '.t_date')
+
   //join titles and authors
   titles = titles.map((el,i)=>{
-    return {...el, ...authors[i]}
+    return {...el, ...authors[i], ...dates[i]}
   })
 
   //convert data into object style

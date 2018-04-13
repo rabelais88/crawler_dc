@@ -43,13 +43,9 @@ const getDB = () =>
 
 //separate analyze 
 async function analyzeText(targetText){
-  //TODO : Load up a text from mongodb
-
   let morphemes = await getMorpheme(targetText)
   return filterMorpheme(morphemes)
 }
-
-
 
 
 function filterMorpheme(targetList){
@@ -76,12 +72,23 @@ async function bootup(){
   logg('try connect to db')
   let db = await getDB() //receives mongodb
   
-  let analyzed = []
+
+  let wordsAmount = {}
   //iterate through all db articles...
   db.collection(MongoCollection).find().forEach(el=>{
     console.log(el)
-    analyzed.push(analyzeText(el.content))
-    console.log(analyzed[analyzed.length-1])
+    //analyze!
+    let analyzed = analyzeText(el.content)
+
+    //let's find out the word amount
+    let wordWeight = {}
+    analyzed.map(word=>{
+      if(wordsAmount[word]){
+        wordsAmount[word] ++
+      }else{
+        wordsAmount[word] = 1
+      }
+    })
   })
   
 }
