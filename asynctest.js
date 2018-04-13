@@ -21,8 +21,16 @@ async function asyncfunc(){
 async function mainfunc(){
   await asyncfunc()
   let testarray = Array.from(Array(20).keys())
-  testarray = testarray.slice(30,99)
+  testarray = testarray.slice(5,30)
   console.log(testarray)
+
+  let testarray2 = Array.from(Array(50).keys())
+  testarray2 = testarray2.map(el=>{
+    if(el % 2 == 0) return el
+  }).filter(
+    el=>el
+  )
+  console.log(testarray2)
 }
 
 mainfunc()

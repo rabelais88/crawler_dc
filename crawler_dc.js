@@ -9,7 +9,8 @@ const moment = require('moment')
 //everything will be written in mongodb 3.0
 const MongoClient = require('mongodb').MongoClient
 const MongoUrl = 'mongodb://localhost:27017/'
-const MongoDBname = 'crawler_aoe'
+const MongoDBname = 'local'
+const MongoCollection = 'crawler_aoe'
 //this is necessary for mongodb error recognition
 const assert = require('assert')
 const logfile = 'crawler_aoe.log'
@@ -89,6 +90,7 @@ async function scrapePage(browser,targetUrl,pageNo){
     return {...el, ...authors[i]}
   })
 
+  //convert data into object style
   let convertedTitles = {}
   titles.map(el=>{
     convertedTitles[/&no=(\d+)/g.exec(el.href)[1]] = el
@@ -120,7 +122,7 @@ async function scrapeArticle(browser,articleUrl,articleId){
         return pv
       }
     })
-    paragraphs = paragraphs.toLowerCase().replace('dc official app','')
+    paragraphs = paragraphs.toLowerCase().replace('dc official app','').replace(/[\n\r]/g,' ')
   }else{
     paragraphs = ''
   }
@@ -133,10 +135,21 @@ async function scrapeArticle(browser,articleUrl,articleId){
 
 
 
+// save data into DB
+function preserveScrape(db,_id,content){
+  logg(`start writing on db...${_id}`)
+  db.collection(MongoCollection)
+  .insert({...{_id:_id},...content},(err,r)=>
+  new Promise((resolve,rejection)=>resolve(r)),
+  {
+    upsert:true
+  })
+}
+
 
 
 // Program's main
-// unfortunately this has to be soooomuch long
+// unfortunately this has to be soooo much long
 async function bootup(){
   logg(`!!! crawling begins on ${moment().format('YYYY/MM/DD hh:mm:ss')} ------------`)
   logg(`target gallery: ${targetGallery} / today's target page: ${pageMin} to ${pageMax} page`)
@@ -167,26 +180,20 @@ async function bootup(){
 
     //using article number as key, this removes all duplicates
     //scrapedPara = [[id,scrapedparagraph]...]
-    scrapedPara.map(el=>{
-      scraped[el[0]].content = el[1]
-      scraped[el[0]]._id = el[0]
-      //TODO work on DB preservation --not tested yet
-      preserve(db,scraped[el[0]])
-    })
+    
+    for(let i=0; i < scrapedPara.length;i++){
+      const targetKey = scrapedPara[i][0]
+      const targetContent = {...scraped[targetKey],...{content:scrapedPara[i][1]}}
+      await preserveScrape(db,targetKey,targetContent)
+    }
 
   }
   await browser.close()
 
 }
 
-function preserve(db,content){
-  db.collection('findAndModify').insert(content,(err,r)=>
-  new Promise((resolve,rejection)=>resolve(r)))
-}
 
 // boot up the main function
 bootup()
-
-
 //to catch unhandled rejection errors with line number
 process.on('unhandledRejection', up => { throw up });
