@@ -63,9 +63,8 @@ typings/
 # mongodb dumps
 dump/
 
+# remove temporal results
 TMP_INPUT_FILE
 TMP_OUTPUT_FILE
 
-!analyzeAll.txt
-!analyzeYm.txt
-!analyzeTemp.txt
+*analyze*.txt
