@@ -54,7 +54,7 @@ function filterMorpheme(targetList){
   return targetList.map(elMorph=>{
     const MorphType = elMorph[1]
     const MorphWord = elMorph[0]
-    if(MorhType === 'NNG') return elMorph[0]
+    if(MorphType === 'NNG') return elMorph[0]
   }).filter(el=>el) //remove undefined
 }
 
@@ -62,8 +62,12 @@ function filterMorpheme(targetList){
 
 
 function getMorpheme(txt){
-  mecabKO(txt,(res)=>{
-    return new Promise((resolve,reject)=>resolve(res))
+  //all promises should cover up callbacks from both top and bottom.
+  //if not, callbacks would return undefined
+  return new Promise((resolve,reject)=>{ 
+    mecabKO(txt,(res)=>{
+      return resolve(res)
+    })
   })
 }
 
@@ -75,54 +79,47 @@ async function bootup(){
   let db = await getDB() //receives mongodb
   
 
-  let wordsAmountAllPeriod = {}
-  let wordsAmountYM = {} //year and month
-  //iterate through all db articles...
-  const cursor = await db.collection(MongoCollection).find().stream()
-  const maxDoc = await db.collection(MongoCollection).count()
-
-
-  
-  /*
-  for(;;){
-    const el = loaded.hasNext() ? loaded.next() : null;
-    if(!el) break
-    console.log(el)
-    //analyze!
-    let analyzed = analyzeText(el.content)
-    console.log(analyzed)
-
-    //let's find out the word amount
-    let wordWeight = {}
-    analyzed.map(word=>{
-
-      //aggregate all datas
-      if(wordsAmountAllPeriod[word]){
-        wordsAmountAllPeriod[word] ++
-      }else{
-        wordsAmountAllPeriod[word] = 1
-      }
-
-      //aggregate per year-month based timeline
-      let targetPeriod = /(\d{4}\.\d{2})\.\d{2}/g.exec(el.date)[1]
-      if(!wordsAmountYM[targetPeriod]){
-        wordsAmountYM[targetPeriod] = {}
-      }
-      if(wordsAmountYM[targetPeriod][word]){
-        wordsAmountYM[targetPeriod][word]++
-      }else{
-        wordsAmountYM[targetPeriod][word] = 1
-      }
-      
-    })
-    
+  //word aggregation
+  let wSum = {
+    all:{},
+    ym:{} // Year-Month Based
   }
-  */
+  //iterate through all db articles...
+  const cursor = await db.collection(MongoCollection).find({date:{$exists:true}}) //filter out corrupted data
+  const maxDoc = await cursor.count()
+  logg('Amount of target document:' + maxDoc)
+  let counter = 0
+  cursor.forEach( async doc => {
+    counter ++
+    logg('reading up doc')
+    let analyzedDoc = await analyzeText(doc.content)
 
-  logg('result is published')
-  preserver('analyze1.txt',JSON.stringify(wordsAmountAllPeriod))
-  preserver('analyze2.txt',JSON.stringify(wordsAmountYM))
-  
+    const targetYM = doc.date.replace(/-|\./g,'').slice(0,6)
+
+    analyzedDoc.forEach(elWord=>{
+      if(wSum.all[elWord]){
+        wSum.all[elWord] ++
+      }else{
+        wSum.all[elWord] = 1
+      }
+
+
+      if(!wSum.ym[targetYM]) wSum.ym[targetYM] = {}
+
+      if(wSum.ym[targetYM][elWord]){
+        wSum.ym[targetYM][elWord] ++
+      }else{
+        wSum.ym[targetYM][elWord] = 1
+      }
+
+    })
+
+    if(counter >= maxDoc){
+      logg('result is published')
+      preserver('!analyzeAll.txt',JSON.stringify(wSum.all))
+      preserver('!analyzeYm.txt',JSON.stringify(wSum.ym))
+    }
+  })
 }
 
 

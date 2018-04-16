@@ -23,7 +23,7 @@ const targetGallery = 'aoegame'
 //limited data amount by redirecting to different URL
 const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
 const pageMin = 1
-const pageMax = 10
+const pageMax = 100
 //!!!detrimental for RAM consumption & performance
 const windowMax = 7 //maximum chrome window opened at once
 
@@ -62,7 +62,7 @@ const getDB = () =>
 async function scrapePage(browser,targetUrl,pageNo){
   const page = await browser.newPage()
   logg(`browsing page ${pageNo} ...`)
-  await page.goto(targetUrl + pageNo)
+  await page.goto(targetUrl + pageNo, {timeout: 3000000})
   //below is not really necessary
   //await page.waitForSelector('.t_subject > a')
   logg(`...ready to scrape the page ${pageNo} !`)
@@ -103,7 +103,7 @@ async function scrapePage(browser,targetUrl,pageNo){
   //convert data into object style
   let convertedTitles = {}
   titles.map(el=>{
-    logg(`scraped address - ${el.href}`)
+    logg(`scraped address - ${/&no=(\d+)/g.exec(el.href)}`)
     const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
     if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
   })
@@ -118,7 +118,7 @@ async function scrapePage(browser,targetUrl,pageNo){
 
 //----------scrape single article element
 async function scrapeArticle(browser,articleUrl,articleId){
-  logg(`scraping article(${articleId}) from - ${articleUrl}`)
+  logg(`scraping article(${articleId})`)
   const page = await browser.newPage()
   //multiple async page loading time gets exponentially bigger,
   //creates timeout rejection
@@ -133,7 +133,7 @@ async function scrapeArticle(browser,articleUrl,articleId){
     paragraphs = ''
   }
   await page.close()
-  console.log(articleUrl,articleId, paragraphs)
+  //console.log(articleUrl,articleId, paragraphs)
 
   return new Promise((resolve,reject)=>resolve([articleId,paragraphs]))
 
