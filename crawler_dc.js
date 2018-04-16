@@ -23,7 +23,7 @@ const targetGallery = 'aoegame'
 //limited data amount by redirecting to different URL
 const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
 const pageMin = 1
-const pageMax = 100
+const pageMax = 30
 //!!!detrimental for RAM consumption & performance
 const windowMax = 7 //maximum chrome window opened at once
 
@@ -163,7 +163,7 @@ async function bootup(){
   let db = await getDB() //receives mongodb
 
   const browser = await puppeteer.launch({
-    //headless:false //set headelss:false for gui debug
+    headless:false //set headelss:false for gui debug
   })
 
   //scraping finished resources
@@ -177,7 +177,7 @@ async function bootup(){
     //scraped = {...scraped,...await scrapePage(browser,targetUrl,i)}
     pageScrapePlan.push(scrapePage(browser,targetUrl,i))
     countLimit++
-    if(countLimit === windowMax || i === pageMax) {
+    if(countLimit % windowMax === 0 || i === pageMax) {
       //if the counter reaches the maximum number of windows, run scraping at once
       let resPage = await Promise.all(pageScrapePlan)
       resPage.map(elScrappedFromPage=>{
@@ -192,7 +192,7 @@ async function bootup(){
   const scrapedKeys = Object.keys(scraped)
   for(let i=0;i< scrapedKeys.length / windowMax;i++){
 
-    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length}`)
+    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - Completion: ${(i*windowMax + windowMax / scrapedKeys.length * 100).toFixed(2)}%`)
 
     let scrapePlan = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax).map(el=>{
       return scrapeArticle(browser,scraped[el].href,el)
