@@ -85,24 +85,38 @@ async function bootup(){
     ym:{} // Year-Month Based
   }
   //iterate through all db articles...
-  const cursor = await db.collection(MongoCollection).find({date:{$exists:true}}) //filter out corrupted data
+  const cursor = await db.collection(MongoCollection).find({date:{$exists:true}}) //filter out corrupted data for test run
   const maxDoc = await cursor.count()
   logg('Amount of target document:' + maxDoc)
   let counter = 0
-  cursor.forEach( async doc => {
+  //used while-for instead of foreach-map. necessary for asynchronous operation
+  while ( await cursor.hasNext() ) {
+
+
+    let doc = await cursor.next()
     counter ++
-    logg('reading up doc')
+    logg(`reading up doc ${counter} / ${maxDoc} --- ${(counter/maxDoc * 100).toFixed(2)}%`)
     let analyzedDoc = await analyzeText(doc.content)
 
     const targetYM = doc.date.replace(/-|\./g,'').slice(0,6)
 
-    analyzedDoc.forEach(elWord=>{
+    const isInDoc = []
+    
+    for(let i=0;i<analyzedDoc.length;i++){
+      const elWord = analyzedDoc[i]
+
+      if(isInDoc.indexOf(elWord) === -1){
+        isInDoc.push(elWord)
+      }
+
+    }
+
+    isInDoc.map(elWord=>{
       if(wSum.all[elWord]){
         wSum.all[elWord] ++
       }else{
         wSum.all[elWord] = 1
       }
-
 
       if(!wSum.ym[targetYM]) wSum.ym[targetYM] = {}
 
@@ -111,15 +125,20 @@ async function bootup(){
       }else{
         wSum.ym[targetYM][elWord] = 1
       }
-
     })
 
     if(counter >= maxDoc){
-      logg('result is published')
-      preserver('!analyzeAll.txt',JSON.stringify(wSum.all))
-      preserver('!analyzeYm.txt',JSON.stringify(wSum.ym))
+      logg('congratulations...the result is published')
+      let comp
+      comp = await preserver('!analyzeAll.txt',JSON.stringify(wSum.all)),
+      comp = await preserver('!analyzeYm.txt',JSON.stringify(wSum.ym))
+      if(comp){
+        process.exit()
+      }
     }
-  })
+
+
+  }
 }
 
 

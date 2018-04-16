@@ -163,7 +163,7 @@ async function bootup(){
   let db = await getDB() //receives mongodb
 
   const browser = await puppeteer.launch({
-    headless:false //set headelss:false for gui debug
+    //headless:false //set headelss:false for gui debug
   })
 
   //scraping finished resources
@@ -192,7 +192,7 @@ async function bootup(){
   const scrapedKeys = Object.keys(scraped)
   for(let i=0;i< scrapedKeys.length / windowMax;i++){
 
-    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - Completion: ${(i*windowMax + windowMax / scrapedKeys.length * 100).toFixed(2)}%`)
+    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - Completion: ${((i*windowMax + windowMax) / scrapedKeys.length * 100).toFixed(2)}%`)
 
     let scrapePlan = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax).map(el=>{
       return scrapeArticle(browser,scraped[el].href,el)

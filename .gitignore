@@ -62,3 +62,10 @@ typings/
 
 # mongodb dumps
 dump/
+
+TMP_INPUT_FILE
+TMP_OUTPUT_FILE
+
+!analyzeAll.txt
+!analyzeYm.txt
+!analyzeTemp.txt
