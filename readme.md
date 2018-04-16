@@ -16,6 +16,22 @@ dcinside.com gallery crawler
 ---
 Chrome headless, puppeteer, node.js
 
+사용방법
+---
+1. yarn 또는 npm 을 사용하여 필수조건들을 설치한다.
+> yarn install
+> npm i
+2. 리눅스 환경에서 mecab-ko를 설치한다.
+3. 기초 세팅값을 입력하고 저장한다.
+4. MongoDB daemon(mongod)을 실행시킨다.
+> systemctl start mongod
+5. crawler_dc.js를 이용하여 필요한 값을 크롤링하면 MongoDB에 값이 저장된다.
+> node crawler_dc.js
+6. analyze_dc.js를 이용하여 MongoDB에 저장된 값으로 분석하면 텍스트 파일이 생성된다.
+> node_analyze_dc.js
+7. tempanalylzer.js를 실행하면 최종 필터링 및 소트된 값이 텍스트 파일로 저장된다.(임시)
+> node tempanalyzer.js
+
 만든 사람
 ---
 박성렬(Sungryeol Park)
