@@ -5,14 +5,16 @@ const mecabKO = require('./mecab-mod.js')
 //everything will be written in mongodb 3.0
 const MongoClient = require('mongodb').MongoClient
 const MongoUrl = 'mongodb://localhost:27017/'
-const MongoDBname = 'local'
-const MongoCollection = 'crawler_aoe'
+const MongoDBname = 'crawler_dc'
+const MongoCollection = 'gallery_aoe'
 
 const assert = require('assert')
 
 const logfile = 'analyzer.log'
 const winston = require('winston')
 const moment = require('moment')
+
+const preserver = require('./preserver.js')
 
 const logger = winston.createLogger({
   transports:[
@@ -44,7 +46,7 @@ const getDB = () =>
 //separate analyze 
 async function analyzeText(targetText){
   let morphemes = await getMorpheme(targetText)
-  return filterMorpheme(morphemes)
+  return new Promise((resolve,reject)=>resolve(filterMorpheme(morphemes)))
 }
 
 
@@ -76,10 +78,19 @@ async function bootup(){
   let wordsAmountAllPeriod = {}
   let wordsAmountYM = {} //year and month
   //iterate through all db articles...
-  db.collection(MongoCollection).find().forEach(el=>{
+  const cursor = await db.collection(MongoCollection).find().stream()
+  const maxDoc = await db.collection(MongoCollection).count()
+
+
+  
+  /*
+  for(;;){
+    const el = loaded.hasNext() ? loaded.next() : null;
+    if(!el) break
     console.log(el)
     //analyze!
     let analyzed = analyzeText(el.content)
+    console.log(analyzed)
 
     //let's find out the word amount
     let wordWeight = {}
@@ -102,9 +113,15 @@ async function bootup(){
       }else{
         wordsAmountYM[targetPeriod][word] = 1
       }
-
+      
     })
-  })
+    
+  }
+  */
+
+  logg('result is published')
+  preserver('analyze1.txt',JSON.stringify(wordsAmountAllPeriod))
+  preserver('analyze2.txt',JSON.stringify(wordsAmountYM))
   
 }
 
@@ -112,3 +129,5 @@ async function bootup(){
 bootup()
 //to catch unhandled rejection errors with line number
 process.on('unhandledRejection', up => { throw up });
+
+

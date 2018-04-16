@@ -9,8 +9,8 @@ const moment = require('moment')
 //everything will be written in mongodb 3.0
 const MongoClient = require('mongodb').MongoClient
 const MongoUrl = 'mongodb://localhost:27017/'
-const MongoDBname = 'local'
-const MongoCollection = 'crawler_aoe'
+const MongoDBname = 'crawler_dc'
+const MongoCollection = 'gallery_aoe'
 //this is necessary for mongodb error recognition
 const assert = require('assert')
 const logfile = 'crawler_aoe.log'
