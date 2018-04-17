@@ -103,7 +103,7 @@ async function scrapePage(browser,targetUrl,pageNo){
   //convert data into object style
   let convertedTitles = {}
   titles.map(el=>{
-    const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
+    const articleId = /&no=(\d+)/g.exec(el.href[1]) //this could return null because sometimes they have different type of url
     logg(`scraped address - ${articleId}`)
 
     if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
@@ -175,7 +175,7 @@ async function bootup(){
   let countLimit = 0
   let pageScrapePlan = []
   for(let i=pageMin;i<=pageMax;i++){
-    logg(`crawling on page ${i} / ${pageMax} ---- ${(i / pageMax * 100).toFixed(2)}`)
+    logg(`crawling on page ${i} / ${pageMax} ---- ${(i / pageMax * 100).toFixed(2)}%`)
     //scraped = {...scraped,...await scrapePage(browser,targetUrl,i)}
     pageScrapePlan.push(scrapePage(browser,targetUrl,i))
     countLimit++
