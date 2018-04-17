@@ -13,7 +13,7 @@ const MongoDBname = 'crawler_dc'
 const MongoCollection = 'gallery_aoe'
 //this is necessary for mongodb error recognition
 const assert = require('assert')
-const logfile = 'crawler_aoe.log'
+const logfile = 'crawler.log'
 
 const targetGallery = 'aoegame'
 
@@ -103,8 +103,9 @@ async function scrapePage(browser,targetUrl,pageNo){
   //convert data into object style
   let convertedTitles = {}
   titles.map(el=>{
-    logg(`scraped address - ${/&no=(\d+)/g.exec(el.href)}`)
     const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
+    logg(`scraped address - ${articleId}`)
+
     if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
   })
   await page.close()
@@ -174,6 +175,7 @@ async function bootup(){
   let countLimit = 0
   let pageScrapePlan = []
   for(let i=pageMin;i<=pageMax;i++){
+    logg(`crawling on page ${i} / ${pageMax} ---- ${(i / pageMax * 100).toFixed(2)}`)
     //scraped = {...scraped,...await scrapePage(browser,targetUrl,i)}
     pageScrapePlan.push(scrapePage(browser,targetUrl,i))
     countLimit++

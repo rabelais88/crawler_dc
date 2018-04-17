@@ -63,8 +63,10 @@ typings/
 # mongodb dumps
 dump/
 
-# remove temporal results
+# remove temporary results
 TMP_INPUT_FILE
 TMP_OUTPUT_FILE
 
 *analyze*.txt
+
+pub/myapp.js
