@@ -1,0 +1,22 @@
+
+.chart{
+  padding:20px;
+}
+.elChart {
+  display:flex;
+}
+.elChart > p{
+  width:10%;
+}
+.elChart > div{
+  flex-grow:1;
+  display:flex;
+  align-items:center;
+}
+.elChart > div > div {
+  display:block;
+  background-color:#361d8f;
+  content:' ';
+  color:white;
+  height:80%;
+}

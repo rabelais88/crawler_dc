@@ -13,6 +13,7 @@
     "puppeteer": "^1.2.0",
     "vue": "^2.5.16",
     "vue-axios": "^2.1.1",
+    "vuetify": "^1.0.14",
     "winston": "^3.0.0-rc4"
   },
   "devDependencies": {

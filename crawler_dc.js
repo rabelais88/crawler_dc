@@ -23,7 +23,7 @@ const targetGallery = 'aoegame'
 //limited data amount by redirecting to different URL
 const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
 const pageMin = 1
-const pageMax = 30
+const pageMax = 403
 //!!!detrimental for RAM consumption & performance
 const windowMax = 7 //maximum chrome window opened at once
 

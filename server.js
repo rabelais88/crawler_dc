@@ -33,14 +33,15 @@ MongoClient.connect(MongoUrl,(err,client)=>{
 })
 
 app.get('/dataword.json',(req,res)=>{
-  console.log('data requested')
-  db.collection(MongoCollection).find({'_id':'resultAll'}).next((err,doc)=>{
+  const targetPeriod = req.params.period ? req.params.period : 'All'
+  console.log('data requested on period',targetPeriod )
+  db.collection(MongoCollection).find({'_id':'result' + targetPeriod}).next((err,doc)=>{
     let words = Object.keys(doc.data).map(el=>
       [el,doc.data[el]]
     ).sort((a,b)=>
       b[1] - a[1]
-    ).slice(0,30) //top 30
-    console.log(words)
+    ).slice(0,100) // top 100 is the max
+    //console.log(words)
 
     res.json(words)
   })
