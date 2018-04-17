@@ -103,8 +103,8 @@ async function scrapePage(browser,targetUrl,pageNo){
   //convert data into object style
   let convertedTitles = {}
   titles.map(el=>{
-    const articleId = /&no=(\d+)/g.exec(el.href[1]) //this could return null because sometimes they have different type of url
-    logg(`scraped address - ${articleId}`)
+    const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
+    logg(`scraped address - ${articleId[1]}`)
 
     if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
   })
