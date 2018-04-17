@@ -60,56 +60,60 @@ const getDB = () =>
 
 //-----------scrape titles & author & href & comment from single page
 async function scrapePage(browser,targetUrl,pageNo){
-  const page = await browser.newPage()
-  logg(`browsing page ${pageNo} ...`)
-  await page.goto(targetUrl + pageNo, {timeout: 3000000})
-  //below is not really necessary
-  //await page.waitForSelector('.t_subject > a')
-  logg(`...ready to scrape the page ${pageNo} !`)
-  
-  //due to an unknown bug, this data has to be processed by filter.
-  //the program can't recognize any variables inside the forEach/map
-  //it is assumed to be a js scope problem
-  let titles = await page.evaluate((selector)=> {
-    return [...document.querySelectorAll(selector)].map(el=>{
-      return { text: el.innerText, href:el.href, comment:0 } })
-  }, '.t_subject > a')
-  titles = titles.filter((el,i)=>{
-    if(/\[\d+\]/g.test(el.text)){
-      //if it's a comment number
-      titles[i - 1].comment = Math.ceil(/\[(\d+)\]/g.exec(el.text)[1]) //Math.ceil is safer than parseint
-      return false
-    }else{
-      return el.text
-    }
-  })
-
-  let authors = await page.evaluate((selector)=>{
-    return [...document.querySelectorAll(selector)].map(el=>{
-      return { author: el.innerText}})
-  }, '.user_nick_nm')
-
-  let dates = await page.evaluate((selector)=>{
-    return [...document.querySelectorAll(selector)].map(el=>{
-      return { date: el.innerText}
+  try{
+    const page = await browser.newPage()
+    logg(`browsing page ${pageNo} ...`)
+    await page.goto(targetUrl + pageNo, {timeout: 3000000})
+    //below is not really necessary
+    //await page.waitForSelector('.t_subject > a')
+    logg(`...ready to scrape the page ${pageNo} !`)
+    
+    //due to an unknown bug, this data has to be processed by filter.
+    //the program can't recognize any variables inside the forEach/map
+    //it is assumed to be a js scope problem
+    let titles = await page.evaluate((selector)=> {
+      return [...document.querySelectorAll(selector)].map(el=>{
+        return { text: el.innerText, href:el.href, comment:0 } })
+    }, '.t_subject > a')
+    titles = titles.filter((el,i)=>{
+      if(/\[\d+\]/g.test(el.text)){
+        //if it's a comment number
+        titles[i - 1].comment = Math.ceil(/\[(\d+)\]/g.exec(el.text)[1]) //Math.ceil is safer than parseint
+        return false
+      }else{
+        return el.text
+      }
     })
-  }, '.t_date')
 
-  //join titles and authors
-  titles = titles.map((el,i)=>{
-    return {...el, ...authors[i], ...dates[i]}
-  })
+    let authors = await page.evaluate((selector)=>{
+      return [...document.querySelectorAll(selector)].map(el=>{
+        return { author: el.innerText}})
+    }, '.user_nick_nm')
 
-  //convert data into object style
-  let convertedTitles = {}
-  titles.map(el=>{
-    const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
-    logg(`scraped address - ${articleId ? articleId[1] : 'wrongid'}`)
+    let dates = await page.evaluate((selector)=>{
+      return [...document.querySelectorAll(selector)].map(el=>{
+        return { date: el.innerText}
+      })
+    }, '.t_date')
 
-    if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
-  })
-  await page.close()
-  return new Promise((resolve,reject)=>resolve(convertedTitles))
+    //join titles and authors
+    titles = titles.map((el,i)=>{
+      return {...el, ...authors[i], ...dates[i]}
+    })
+
+    //convert data into object style
+    let convertedTitles = {}
+    titles.map(el=>{
+      const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
+      logg(`scraped address - ${articleId ? articleId[1] : 'wrongid'}`)
+
+      if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
+    })
+    if(page) await page.close()
+    return new Promise((resolve,reject)=>resolve(convertedTitles))
+  }catch(e){
+    warnn(e)
+  }
 }
 
 
@@ -119,25 +123,27 @@ async function scrapePage(browser,targetUrl,pageNo){
 
 //----------scrape single article element
 async function scrapeArticle(browser,articleUrl,articleId){
-  logg(`scraping article(${articleId})`)
-  const page = await browser.newPage()
-  //multiple async page loading time gets exponentially bigger,
-  //creates timeout rejection
-  await page.goto(articleUrl, {timeout: 3000000}) //timeouts will be disabled
+  try{
+    logg(`scraping article(${articleId})`)
+    const page = await browser.newPage()
+    //multiple async page loading time gets exponentially bigger,
+    //creates timeout rejection
+    await page.goto(articleUrl, {timeout: 3000000}) //timeouts will be disabled
 
-  let paragraphs = await page.evaluate((selector)=>
-    [...document.querySelectorAll(selector)].map(el=>
-  el.innerText),'.s_write p, .s_write div')
-  if (paragraphs.length > 1) {
-    paragraphs = paragraphs.join(' ').toLowerCase().replace('dc official app','').replace(/[\n\r]/g,' ')
-  }else{
-    paragraphs = ''
+    let paragraphs = await page.evaluate((selector)=>
+      [...document.querySelectorAll(selector)].map(el=>
+    el.innerText),'.s_write p, .s_write div')
+    if (paragraphs.length > 1) {
+      paragraphs = paragraphs.join(' ').toLowerCase().replace('dc official app','').replace(/[\n\r]/g,' ')
+    }else{
+      paragraphs = ''
+    }
+    if(page) await page.close()
+    //console.log(articleUrl,articleId, paragraphs)
+    return new Promise((resolve,reject)=>resolve([articleId,paragraphs]))
+  }catch(e){
+    warnn(e)
   }
-  await page.close()
-  //console.log(articleUrl,articleId, paragraphs)
-
-  return new Promise((resolve,reject)=>resolve([articleId,paragraphs]))
-
 }
 
 
@@ -164,7 +170,8 @@ async function bootup(){
   let db = await getDB() //receives mongodb
 
   const browser = await puppeteer.launch({
-    //headless:false //set headelss:false for gui debug
+    headless:false //set headelss:false for gui debug
+    ,args: ['--no-sandbox', '--disable-setuid-sandbox'] //for prevent ererors
   })
 
   //scraping finished resources
