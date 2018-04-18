@@ -70,3 +70,5 @@ TMP_OUTPUT_FILE
 *analyze*.txt
 
 pub/myapp.js
+
+setting_private.json

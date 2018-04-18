@@ -1,31 +1,57 @@
 //puppeteer(headless chrome) requires latest chrome install
 const puppeteer = require('puppeteer')
 const fs = require('fs')
-const resDir = './res'
 //use yarn add winston@next for installing latest winston
 const winston = require('winston')
 const moment = require('moment')
 
+//main settings
+const preset = {
+  public: require('./setting_public.json'),
+  private: require('./setting_private.json')
+}
+/*
+//settings, public
+{
+  "mongo":{
+    "DBname":"crawler_dc",
+    "collection":"gallery_aoe"
+  },
+  "logfileName":"crawler.log",
+  "targetGallery":"aoegame",
+  "title":"aoe gallery",
+  "pageMin":1,
+  "pageMax":20,
+  "windowMax":7
+}
+
+//settings, private
+{"mongoUrl":"mongodb://localhost:27017/"}
+*/
+
+
 //everything will be written in mongodb 3.0
 const MongoClient = require('mongodb').MongoClient
-const MongoUrl = 'mongodb://localhost:27017/'
-const MongoDBname = 'crawler_dc'
-const MongoCollection = 'gallery_aoe'
+const MongoUrl = preset.private.mongoUrl
+const MongoDBname = preset.public.mongo.DBname
+const MongoCollection = preset.public.mongo.collection
 //this is necessary for mongodb error recognition
 const assert = require('assert')
-const logfile = 'crawler.log'
+const logfile = preset.public.logfileName
 
-const targetGallery = 'aoegame'
+const targetGallery = preset.public.targetGallery
+
+
 
 //too much data from below address
 //const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&page=`
 
 //limited data amount by redirecting to different URL
 const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
-const pageMin = 1
-const pageMax = 403
+const pageMin = preset.public.pageMin
+const pageMax = preset.public.pageMax //limit it to 20~30 pages at once since it may cause hang & RAM errors
 //!!!detrimental for RAM consumption & performance
-const windowMax = 7 //maximum chrome window opened at once
+const windowMax = preset.public.windowMax //maximum chrome window opened at once
 
 // we'll write down a log into a log file
 // we're dealing with large amount of I/O
@@ -171,7 +197,12 @@ async function bootup(){
 
   const browser = await puppeteer.launch({
     headless:false //set headelss:false for gui debug
-    ,args: ['--no-sandbox', '--disable-setuid-sandbox'] //for prevent ererors
+    ,args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--hide-scrollbars',
+      '--mute-audio'] //for preventing errors & RAM consumption
   })
 
   //scraping finished resources

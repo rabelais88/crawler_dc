@@ -1,0 +1,12 @@
+{
+  "mongo":{
+    "DBname":"crawler_dc",
+    "collection":"gallery_aoe"
+  },
+  "logfileName":"crawler.log",
+  "targetGallery":"aoegame",
+  "title":"aoe gallery",
+  "pageMin":1,
+  "pageMax":20,
+  "windowMax":7
+}

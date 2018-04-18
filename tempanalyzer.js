@@ -2,10 +2,11 @@ const fs = require('fs')
 const preserver = require('./preserver.js')
 
 const MongoClient = require('mongodb').MongoClient
-const MongoUrl = 'mongodb://localhost:27017/'
-const MongoDBname = 'crawler_dc'
-const MongoCollection = 'gallery_aoe'
-
+const MongoUrl = preset.private.mongoUrl
+const MongoDBname = preset.public.mongo.DBname
+const MongoCollection = preset.public.mongo.collection
+//this is necessary for mongodb error recognition
+const logfile = preset.public.logfileName
 
 const getDB = () =>
   new Promise((resolve,reject)=>{

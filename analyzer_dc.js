@@ -1,16 +1,19 @@
 //Previously made mecab-mod.js
 const mecabKO = require('./mecab-mod.js')
 
-//this info will be later moved to settings.json
+const preset = {
+  public: require('./setting_public.json'),
+  private: require('./setting_private.json')
+}
 //everything will be written in mongodb 3.0
 const MongoClient = require('mongodb').MongoClient
-const MongoUrl = 'mongodb://localhost:27017/'
-const MongoDBname = 'crawler_dc'
-const MongoCollection = 'gallery_aoe'
+const MongoUrl = preset.private.mongoUrl
+const MongoDBname = preset.public.mongo.DBname
+const MongoCollection = preset.public.mongo.collection
+//this is necessary for mongodb error recognition
+const logfile = preset.public.logfileName
 
 const assert = require('assert')
-
-const logfile = 'analyzer.log'
 const winston = require('winston')
 const moment = require('moment')
 
