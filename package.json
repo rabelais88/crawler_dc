@@ -31,5 +31,10 @@
     "vue-loader": "^14.2.2",
     "webpack": "^4.5.0",
     "webpack-cli": "^2.0.14"
+  },
+  "scripts":{
+    "1":"env DEBUG='puppeteer:*,-puppeteer:session,-puppeteer:protocol,-puppeteer:request' node crawler_dc.js",
+    "2":"analyzer_dc.js",
+    "3":"tempanalyzer.js"
   }
 }

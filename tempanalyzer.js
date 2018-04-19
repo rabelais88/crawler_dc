@@ -18,11 +18,18 @@ const getDB = () =>
     })
   })
 
+const readF = (file) =>
+  new Promise((resolve,reject)=>{
+    fs.readFile(file,{encoding:'utf-8'},(err,data)=>{
+      return resolve(data)
+    })
+  })
 
 
-//sort & filter the result and save it in CSV format
-fs.readFile('!analyzeAll.txt',{encoding:'utf-8'},(err,data)=>{
-  const dataAll = JSON.parse(data)
+;(async()=>{
+  const db = await getDB()
+  const dataYM = JSON.parse(await readF('!analyzeYM.txt'))
+  const dataAll = JSON.parse(await readF('!analyzeAll.txt'))
   let dataSortable = Object.keys(dataAll).map(el=>
     [el,dataAll[el]]
   ).filter(el=>el[1] > 9).sort((a,b)=>b[1] - a[1])
@@ -34,14 +41,11 @@ fs.readFile('!analyzeAll.txt',{encoding:'utf-8'},(err,data)=>{
 
   preserver('!analyzeTemp.txt',dataCSV)
 
-  ;(async()=>{
-    const db = await getDB()
-    db.collection(MongoCollection)
-    .insert({_id:'resultAll',data:dataAll},(err,r)=>{
-      console.log('update result on mongoDB finished')
-    },
-    {
-      upsert:true
-    })
-  })()
+  db.collection(MongoCollection)
+  .insertMany(({_id:'resultAll',data:dataAll},{_id:'resultYM',data:dataYM}),(err,r)=>{
+    console.log('update result on mongoDB finished')
+  },
+  {
+    upsert:true
+  })
 })

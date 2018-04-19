@@ -1,3 +1,4 @@
+'use strict'; //always use this in order to prevent memory leak
 //puppeteer(headless chrome) requires latest chrome install
 const puppeteer = require('puppeteer')
 const fs = require('fs')
@@ -131,7 +132,7 @@ async function scrapePage(browser,targetUrl,pageNo){
     let convertedTitles = {}
     titles.map(el=>{
       const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
-      logg(`scraped address - ${articleId ? articleId[1] : 'wrongid'}`)
+      logg(`scraped address - ${articleId ? articleId[1] : 'wrongid'} - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
 
       if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
     })
@@ -150,7 +151,7 @@ async function scrapePage(browser,targetUrl,pageNo){
 //----------scrape single article element
 async function scrapeArticle(browser,articleUrl,articleId){
   try{
-    logg(`scraping article(${articleId})`)
+    logg(`scraping article(${articleId}) - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
     const page = await browser.newPage()
     //multiple async page loading time gets exponentially bigger,
     //creates timeout rejection
@@ -176,7 +177,7 @@ async function scrapeArticle(browser,articleUrl,articleId){
 
 // save data into DB
 function preserveScrape(db,_id,content){
-  logg(`start writing on db...${_id}`)
+  logg(`start writing on db...${_id} - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
   db.collection(MongoCollection)
   .insert({...{_id:_id},...content},(err,r)=>
   new Promise((resolve,rejection)=>resolve(r)),
@@ -196,8 +197,8 @@ async function bootup(){
   let db = await getDB() //receives mongodb
 
   const browser = await puppeteer.launch({
-    headless:false //set headelss:false for gui debug
-    ,args: [
+    //headless:false //set headelss:false for gui debug
+    args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-gpu',
@@ -237,7 +238,7 @@ async function bootup(){
     let scrapePlan = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax).map(el=>{
       return scrapeArticle(browser,scraped[el].href,el)
     })
-    scrapedPara = await Promise.all(scrapePlan)
+    let scrapedPara = await Promise.all(scrapePlan)
 
     //using article number as key, this removes all duplicates
     //scrapedPara = [[id,scrapedparagraph]...]
@@ -250,7 +251,6 @@ async function bootup(){
 
   }
   await browser.close()
-  await db.close()
 
 }
 
