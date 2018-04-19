@@ -259,7 +259,7 @@ async function bootup(){
   for(let i=0;i< scrapedKeys.length / windowMax;i++){
 
     const now = moment()
-    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - ${now.format('hh:mm:ss')} - Completion: ${((i*windowMax + windowMax) / scrapedKeys.length * 100).toFixed(2)}% / completed in ${moment.duration(prevTime.diff(now)).asSeconds()} sec.`)
+    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - ${now.format('hh:mm:ss')} - Completion: ${((i*windowMax + windowMax) / scrapedKeys.length * 100).toFixed(2)}% / completed in ${moment.duration(now.diff(prevTime)).asSeconds()} sec.`)
     prevTime = now
     let scrapePlan = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax).map(el=>{
       return scrapeArticle(browser,scraped[el].href,el)
