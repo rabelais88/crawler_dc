@@ -1,5 +1,4 @@
 dcinside.com gallery crawler
-디씨인사이드 갤러리 크롤러
 ===
 
 목표
@@ -31,6 +30,13 @@ Chrome headless, puppeteer, node.js
 > node_analyze_dc.js
 7. tempanalylzer.js를 실행하면 최종 필터링 및 소트된 값이 텍스트 파일로 저장된다.(임시)
 > node tempanalyzer.js
+
+script arguments
+---
+crawling from page 1 to 30(overrides setting_public.json)
+>node crawler_dc.js -page 1 30
+without verbose debugging logs
+>node crawler_dc.js -simple
 
 만든 사람
 ---
