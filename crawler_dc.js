@@ -179,7 +179,7 @@ async function scrapeArticle(browser,articleUrl,articleId){
       logg('dialog: ', dialog.message(), '- this will be dismissed')
       await dialog.dismiss()
     })
-    await page.goto(articleUrl, {timeout: 3000000}) //timeouts will be disabled
+    await page.goto(articleUrl, {timeout: 300000}) //timeouts will be disabled
 
     let paragraphs = await page.evaluate((selector)=>
       [...document.querySelectorAll(selector)].map(el=>
