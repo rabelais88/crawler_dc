@@ -172,6 +172,13 @@ async function scrapeArticle(browser,articleUrl,articleId){
     const page = await browser.newPage()
     //multiple async page loading time gets exponentially bigger,
     //creates timeout rejection
+
+    //in order to prevent freezing due to dialog
+    await page.setJavaScriptEnabled(false)
+    page.on('dialog', async dialog => {
+      logg('dialog: ', dialog.message(), '- this will be dismissed')
+      await dialog.dismiss()
+    })
     await page.goto(articleUrl, {timeout: 3000000}) //timeouts will be disabled
 
     let paragraphs = await page.evaluate((selector)=>
@@ -231,7 +238,7 @@ async function bootup(){
   let countLimit = 0
   let pageScrapePlan = []
   for(let i=pageMin;i<=pageMax;i++){
-    logg(`crawling on page ${i} / ${pageMax} ---- ${(i / pageMax * 100).toFixed(2)}%`)
+    logg(`crawling on page ${i} / ${pageMax} -- collecting targets ${(i / pageMax * 100).toFixed(2)}%`)
     //scraped = {...scraped,...await scrapePage(browser,targetUrl,i)}
     pageScrapePlan.push(scrapePage(browser,targetUrl,i))
     countLimit++
@@ -248,10 +255,13 @@ async function bootup(){
 
   //multiple articles are scraped at once
   const scrapedKeys = Object.keys(scraped)
+  let prevTime = moment()
   for(let i=0;i< scrapedKeys.length / windowMax;i++){
 
-    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - Completion: ${((i*windowMax + windowMax) / scrapedKeys.length * 100).toFixed(2)}% - ${moment().format('hh:mm:ss')}`)
-
+    const now = moment()
+    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - Completion: ${((i*windowMax + windowMax) / scrapedKeys.length * 100).toFixed(2)}% - ${now.format('hh:mm:ss')}`)
+    logg(`work completion time: ${moment.duration(prevTime.diff(now)).humanize()}`)
+    prevTime = now
     let scrapePlan = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax).map(el=>{
       return scrapeArticle(browser,scraped[el].href,el)
     })

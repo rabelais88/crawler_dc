@@ -5,6 +5,7 @@ const preset = {
   public: require('./setting_public.json'),
   private: require('./setting_private.json')
 }
+
 //everything will be written in mongodb 3.0
 const MongoClient = require('mongodb').MongoClient
 const MongoUrl = preset.private.mongoUrl
