@@ -67,7 +67,7 @@ dump/
 TMP_INPUT_FILE
 TMP_OUTPUT_FILE
 
-*analyze*.txt
+.txt
 
 pub/myapp.js
 

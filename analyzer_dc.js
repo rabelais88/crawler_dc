@@ -85,7 +85,9 @@ async function bootup(){
   //word aggregation
   let wSum = {
     all:{},
-    ym:{} // Year-Month Based
+    ym:{}, // Year-Month Based
+    titleAll:{},
+    titleYM:{}
   }
   //iterate through all db articles...
   const cursor = await db.collection(MongoCollection).find({date:{$exists:true}}) //filter out corrupted data for test run
@@ -100,11 +102,14 @@ async function bootup(){
     counter ++
     logg(`reading up doc ${counter} / ${maxDoc} --- ${(counter/maxDoc * 100).toFixed(2)}%`)
     let analyzedDoc = await analyzeText(doc.content)
+    let analyzedTitle = await analyzeText(doc.text) // I just did a wrong naming....
 
     const targetYM = doc.date.replace(/-|\./g,'').slice(0,6)
 
-    const isInDoc = []
+    let isInDoc = []
+    let isInTitle = []
     
+    //analyzing document
     for(let i=0;i<analyzedDoc.length;i++){
       const elWord = analyzedDoc[i]
 
@@ -130,11 +135,37 @@ async function bootup(){
       }
     })
 
+    //analyzing titles
+    for(let i=0;i<analyzedTitle.length;i++){
+      const elWord = analyzedTitle[i]
+      if(isInTitle.indexOf(elWord) === -1) {
+        isInTitle.push(elWord)
+      }
+    }
+
+    isInTitle.map(elWord=>{
+      if(wSum.titleAll[elWord]){
+        wSum.titleAll[elWord] ++
+      }else{
+        wSum.titleAll[elWord] = 1
+      }
+
+      if(!wSum.titleYM[targetYM]) wSum.titleYM[targetYM] = {}
+
+      if(wSum.titleYM[targetYM][elWord]){
+        wSum.titleYM[targetYM][elWord] ++
+      }else{
+        wSum.ym[targetYM][elWord] = 1
+      }
+    })
+
     if(counter >= maxDoc){
       logg('congratulations...the result is published')
       let comp
-      comp = await preserver('!analyzeAll.txt',JSON.stringify(wSum.all)),
-      comp = await preserver('!analyzeYm.txt',JSON.stringify(wSum.ym))
+      comp = await preserver('!ana-All.txt',JSON.stringify(wSum.all))
+      comp = await preserver('!ana-YM.txt',JSON.stringify(wSum.ym))
+      comp = await preserver('!ana-titleAll.txt',JSON.stringify(wSum.titleAll))
+      comp = await preserver('!ana-titleYM.txt',JSON.stringify(wSum.titleYM))
       if(comp){
         process.exit()
       }

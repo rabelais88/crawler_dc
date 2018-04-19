@@ -30,7 +30,6 @@ const preset = {
 {"mongoUrl":"mongodb://localhost:27017/"}
 */
 
-
 //everything will be written in mongodb 3.0
 const MongoClient = require('mongodb').MongoClient
 const MongoUrl = preset.private.mongoUrl
@@ -49,8 +48,8 @@ const targetGallery = preset.public.targetGallery
 
 //limited data amount by redirecting to different URL
 const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
-const pageMin = preset.public.pageMin
-const pageMax = preset.public.pageMax //limit it to 20~30 pages at once since it may cause hang & RAM errors
+let pageMin = preset.public.pageMin
+let pageMax = preset.public.pageMax //limit it to 20~30 pages at once since it may cause hang & RAM errors
 //!!!detrimental for RAM consumption & performance
 const windowMax = preset.public.windowMax //maximum chrome window opened at once
 
@@ -72,6 +71,24 @@ function warnn(msg){
   logger.log('warn',msg)
 }
 
+const simpleMode = process.argv.indexOf('-simple') != -1 ? true : false //simple mode, no verbose logging
+
+//forcing external page setting by console / npm / yarn / gulp script run
+if(process.argv.length > 2){
+  const forcepage = process.argv.indexOf('-page')
+  if(forcepage != -1){
+    let pages = process.argv.slice(forcepage + 1)
+    if(pages.length < 1){
+      logg('no page option provided...page override setting will be ignored')
+    }else{
+      pages = pages.map(el=>Math.floor(el))
+      pageMin = Math.min(...pages)
+      pageMax = Math.max(...pages)
+      logg(`!!forced page setting --- ${pageMin} ~ ${pageMax} pages!!`)
+    }
+  }
+}
+
 const getDB = () =>
   new Promise((resolve,reject)=>{
     MongoClient.connect(MongoUrl,(err,client)=>{
@@ -89,11 +106,11 @@ const getDB = () =>
 async function scrapePage(browser,targetUrl,pageNo){
   try{
     const page = await browser.newPage()
-    logg(`browsing page ${pageNo} ...`)
+    if(!simpleMode) logg(`browsing page ${pageNo} ...`)
     await page.goto(targetUrl + pageNo, {timeout: 3000000})
     //below is not really necessary
     //await page.waitForSelector('.t_subject > a')
-    logg(`...ready to scrape the page ${pageNo} !`)
+    if(!simpleMode) logg(`...ready to scrape the page ${pageNo} !`)
     
     //due to an unknown bug, this data has to be processed by filter.
     //the program can't recognize any variables inside the forEach/map
@@ -132,7 +149,7 @@ async function scrapePage(browser,targetUrl,pageNo){
     let convertedTitles = {}
     titles.map(el=>{
       const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
-      logg(`scraped address - ${articleId ? articleId[1] : 'wrongid'} - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
+      if(!simpleMode) logg(`scraped address - ${articleId ? articleId[1] : 'wrongid'} - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
 
       if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
     })
@@ -151,7 +168,7 @@ async function scrapePage(browser,targetUrl,pageNo){
 //----------scrape single article element
 async function scrapeArticle(browser,articleUrl,articleId){
   try{
-    logg(`scraping article(${articleId}) - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
+    if(!simpleMode) logg(`scraping article(${articleId}) - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
     const page = await browser.newPage()
     //multiple async page loading time gets exponentially bigger,
     //creates timeout rejection
@@ -177,7 +194,7 @@ async function scrapeArticle(browser,articleUrl,articleId){
 
 // save data into DB
 function preserveScrape(db,_id,content){
-  logg(`start writing on db...${_id} - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
+  if(!simpleMode) logg(`start writing on db...${_id} - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
   db.collection(MongoCollection)
   .insert({...{_id:_id},...content},(err,r)=>
   new Promise((resolve,rejection)=>resolve(r)),
@@ -233,7 +250,7 @@ async function bootup(){
   const scrapedKeys = Object.keys(scraped)
   for(let i=0;i< scrapedKeys.length / windowMax;i++){
 
-    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - Completion: ${((i*windowMax + windowMax) / scrapedKeys.length * 100).toFixed(2)}%`)
+    logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - Completion: ${((i*windowMax + windowMax) / scrapedKeys.length * 100).toFixed(2)}% - ${moment().format('hh:mm:ss')}`)
 
     let scrapePlan = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax).map(el=>{
       return scrapeArticle(browser,scraped[el].href,el)
@@ -251,7 +268,7 @@ async function bootup(){
 
   }
   await browser.close()
-
+  process.exit()
 }
 
 

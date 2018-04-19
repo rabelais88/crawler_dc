@@ -7,6 +7,6 @@
   "targetGallery":"aoegame",
   "title":"aoe gallery",
   "pageMin":1,
-  "pageMax":20,
+  "pageMax":1,
   "windowMax":7
 }

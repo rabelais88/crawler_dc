@@ -1,6 +1,11 @@
 const fs = require('fs')
 const preserver = require('./preserver.js')
 
+const preset = {
+  public: require('./setting_public.json'),
+  private: require('./setting_private.json')
+}
+
 const MongoClient = require('mongodb').MongoClient
 const MongoUrl = preset.private.mongoUrl
 const MongoDBname = preset.public.mongo.DBname
@@ -28,8 +33,8 @@ const readF = (file) =>
 
 ;(async()=>{
   const db = await getDB()
-  const dataYM = JSON.parse(await readF('!analyzeYM.txt'))
-  const dataAll = JSON.parse(await readF('!analyzeAll.txt'))
+  const dataYM = JSON.parse(await readF('!ana-YM.txt'))
+  const dataAll = JSON.parse(await readF('!ana-All.txt'))
   let dataSortable = Object.keys(dataAll).map(el=>
     [el,dataAll[el]]
   ).filter(el=>el[1] > 9).sort((a,b)=>b[1] - a[1])
