@@ -68,7 +68,7 @@ function logg(msg){
 }
 
 function warnn(msg){
-  logger.log('warn',msg)
+  logger.log('warn',msg + '')
 }
 
 const simpleMode = process.argv.indexOf('-simple') != -1 ? true : false //simple mode, no verbose logging
@@ -156,8 +156,10 @@ async function scrapePage(browser,targetUrl,pageNo){
     if(page) await page.close()
     return new Promise((resolve,reject)=>resolve(convertedTitles))
   }catch(e){
+    console.log(e)
     warnn(e)
   }
+
 }
 
 
@@ -173,13 +175,25 @@ async function scrapeArticle(browser,articleUrl,articleId){
     //multiple async page loading time gets exponentially bigger,
     //creates timeout rejection
 
+    //disable image loading
+    await page.setRequestInterception(true);
+    page.on('request', request => {
+      //'document'type for flash
+      if (['image', 'stylesheet', 'font', 'script','video'].indexOf(request.resourceType()) !== -1 || request.url().endsWith('.swf') || request.url().includes('youtube.com')){
+        if(request.url().includes('youtube.com')) { logg('youtube detected...ignore')}
+        request.abort()
+      }else
+        request.continue()
+    })
+
     //in order to prevent freezing due to dialog
     await page.setJavaScriptEnabled(false)
     page.on('dialog', async dialog => {
       logg('dialog: ', dialog.message(), '- this will be dismissed')
       await dialog.dismiss()
     })
-    await page.goto(articleUrl, {timeout: 300000}) //timeouts will be disabled
+
+    await page.goto(articleUrl, {timeout: 3000000}) //timeouts will be disabled
 
     let paragraphs = await page.evaluate((selector)=>
       [...document.querySelectorAll(selector)].map(el=>
@@ -193,8 +207,10 @@ async function scrapeArticle(browser,articleUrl,articleId){
     //console.log(articleUrl,articleId, paragraphs)
     return new Promise((resolve,reject)=>resolve([articleId,paragraphs]))
   }catch(e){
+    console.log(e)
     warnn(e)
   }
+
 }
 
 
@@ -261,7 +277,8 @@ async function bootup(){
     const now = moment()
     logg(`${i*windowMax} ~ ${ i*windowMax + windowMax} - max:${scrapedKeys.length} - ${now.format('hh:mm:ss')} - Completion: ${((i*windowMax + windowMax) / scrapedKeys.length * 100).toFixed(2)}% / completed in ${moment.duration(now.diff(prevTime)).asSeconds()} sec.`)
     prevTime = now
-    let scrapePlan = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax).map(el=>{
+    let targetList = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax)
+    let scrapePlan = targetList.map(el=>{
       return scrapeArticle(browser,scraped[el].href,el)
     })
     let scrapedPara = await Promise.all(scrapePlan)
@@ -270,9 +287,13 @@ async function bootup(){
     //scrapedPara = [[id,scrapedparagraph]...]
     
     for(let i=0; i < scrapedPara.length;i++){
-      const targetKey = scrapedPara[i][0]
-      const targetContent = {...scraped[targetKey],...{content:scrapedPara[i][1]}}
-      await preserveScrape(db,targetKey,targetContent)
+      if(scrapedPara[i]){
+        const targetKey = scrapedPara[i][0]
+        const targetContent = {...scraped[targetKey],...{content:scrapedPara[i][1]}}
+        await preserveScrape(db,targetKey,targetContent)
+      }else{
+        warnn(`!!!!!failed to scrape page - ${scraped[targetList[i]].href}`)
+      }
     }
 
   }
