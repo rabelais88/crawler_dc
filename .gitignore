@@ -68,6 +68,7 @@ TMP_INPUT_FILE
 TMP_OUTPUT_FILE
 
 .txt
+*.txt
 
 pub/myapp.js
 
