@@ -180,7 +180,7 @@ async function scrapeArticle(browser,articleUrl,articleId){
     page.on('request', request => {
       //'document'type for flash
       if (['image', 'stylesheet', 'font', 'script','video'].indexOf(request.resourceType()) !== -1 || request.url().endsWith('.swf') || request.url().includes('youtube.com')){
-        if(request.url().includes('youtube.com')) { logg('youtube detected...ignore')}
+        if(request.url().includes('youtube.com')) { logg('youtube detected...ignore')} //!!youtube causes timeout in many instances
         request.abort()
       }else
         request.continue()
