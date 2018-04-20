@@ -156,7 +156,7 @@ async function bootup(){
       if(wSum.titleYM[targetYM][elWord]){
         wSum.titleYM[targetYM][elWord] ++
       }else{
-        wSum.ym[targetYM][elWord] = 1
+        wSum.titleYM[targetYM][elWord] = 1
       }
     })
 
