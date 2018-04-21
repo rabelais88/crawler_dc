@@ -1,11 +1,12 @@
 //mecab-ko test linux + mecab-ko + mecab-ko-dic required
 
-module.exports = function (targetLyric,cb){
+const fs = require('fs')
+const moment = require('moment')
 
-  var execSync = require('child_process').execSync
-  var fs = require('fs')
-  var tmpInput = 'TMP_INPUT_FILE'
-  var tmpOutput = 'TMP_OUTPUT_FILE'
+module.exports = function mecabKO (targetLyric,cb){
+  const execSync = require('child_process').execSync
+  const tmpInput = 'TMP_IN_' + moment().format('x') + '.tmp'
+  const tmpOutput = 'TMP_OUT_' + moment().format('x') + '.tmp'
   
   fs.writeFileSync(tmpInput,targetLyric,'UTF-8')
 
@@ -18,6 +19,11 @@ module.exports = function (targetLyric,cb){
   catch(e){
     console.log(e)
   }
+
+  //delete templates
+  fs.unlinkSync(tmpInput)
+  fs.unlinkSync(tmpOutput)
+
   res = res.replace(/\r/g, "").replace(/\s+$/, "").split("\n").map(elLine=>{
     return elLine.replace('\t',',').split(',')
   })

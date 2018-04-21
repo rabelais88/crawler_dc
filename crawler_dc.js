@@ -95,7 +95,6 @@ const getDB = () =>
       if(err) return reject(err)
       logg('successfully connected to db')
       return resolve(client.db(MongoDBname))
-      client.close()
     })
   })
 
@@ -217,6 +216,7 @@ async function scrapeArticle(browser,articleUrl,articleId){
 
 // save data into DB
 function preserveScrape(db,_id,content){
+  //db is no longer used...iterating over large db doesn't really work on mongodb
   if(!simpleMode) logg(`start writing on db...${_id} - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
   db.collection(MongoCollection)
   .insert({...{_id:_id},...content},(err,r)=>
@@ -231,7 +231,8 @@ function preserveScrape(db,_id,content){
 // Program's main
 // unfortunately this has to be soooo much long
 async function bootup(){
-  logg(`!!! crawling begins on ${moment().format('YYYY/MM/DD hh:mm:ss')} ------------`)
+  logg('C R A W L --------------------------------------------------------------------------')
+  logg(`crawl begins on ${moment().format('YYYY/MM/DD hh:mm:ss')} ------------`)
   logg(`target gallery: ${targetGallery} / today's target page: ${pageMin} to ${pageMax} page`)
   logg('try connect to db')
   let db = await getDB() //receives mongodb

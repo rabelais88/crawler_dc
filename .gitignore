@@ -67,6 +67,9 @@ dump/
 TMP_INPUT_FILE
 TMP_OUTPUT_FILE
 
+.tmp
+*.tmp
+
 .txt
 *.txt
 

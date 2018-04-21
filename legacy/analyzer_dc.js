@@ -1,3 +1,11 @@
+/*
+//
+//  this code is no longer used due to async/await misdirection
+//
+//
+//
+*/
+
 //Previously made mecab-mod.js
 const mecabKO = require('./mecab-mod.js')
 
@@ -41,7 +49,6 @@ const getDB = () =>
       if(err) return reject(err)
       logg('successfully connected to db')
       return resolve(client.db(MongoDBname))
-      client.close()
     })
   })
 
@@ -90,90 +97,31 @@ async function bootup(){
     titleAll:{},
     titleYM:{}
   }
+  //if iterate over a large db, mongo daemon automatically kills any long-term tasks --> cannot perform manual iteration
+
   //iterate through all db articles...
   const cursor = await db.collection(MongoCollection).find({date:{$exists:true}}) //filter out corrupted data for test run
   const maxDoc = await cursor.count()
   logg('Amount of target document:' + maxDoc)
-  let counter = 0
-  //used while-for instead of foreach-map. necessary for asynchronous operation
-  while ( await cursor.hasNext() ) {
+  let analyzePlan = []
+  let count = 0
+  cursor.each((err,doc)=>{
+    count ++
+    logg(`preloading doc No.${count} async ${(count / maxDoc * 100).toFixed(2)}%`)
+    if(doc.text.length > 1) analyzePlan.push(mecabAsync(doc.text))
+  })
 
+  Promise.all(analyzePlan).then(()=>{ 
+    logg('work done')
+  })
+}
 
-    let doc = await cursor.next()
-    counter ++
-    logg(`reading up doc ${counter} / ${maxDoc} --- ${(counter/maxDoc * 100).toFixed(2)}%`)
-    let analyzedDoc = await analyzeText(doc.content)
-    let analyzedTitle = await analyzeText(doc.text) // I just did a wrong naming....
-
-    const targetYM = doc.date.replace(/-|\./g,'').slice(0,6)
-
-    let isInDoc = []
-    let isInTitle = []
-    
-    //analyzing document
-    for(let i=0;i<analyzedDoc.length;i++){
-      const elWord = analyzedDoc[i]
-
-      if(isInDoc.indexOf(elWord) === -1){
-        isInDoc.push(elWord)
-      }
-
-    }
-
-    isInDoc.map(elWord=>{
-      if(wSum.all[elWord]){
-        wSum.all[elWord] ++
-      }else{
-        wSum.all[elWord] = 1
-      }
-
-      if(!wSum.ym[targetYM]) wSum.ym[targetYM] = {}
-
-      if(wSum.ym[targetYM][elWord]){
-        wSum.ym[targetYM][elWord] ++
-      }else{
-        wSum.ym[targetYM][elWord] = 1
-      }
-    })
-
-    //analyzing titles
-    for(let i=0;i<analyzedTitle.length;i++){
-      const elWord = analyzedTitle[i]
-      if(isInTitle.indexOf(elWord) === -1) {
-        isInTitle.push(elWord)
-      }
-    }
-
-    isInTitle.map(elWord=>{
-      if(wSum.titleAll[elWord]){
-        wSum.titleAll[elWord] ++
-      }else{
-        wSum.titleAll[elWord] = 1
-      }
-
-      if(!wSum.titleYM[targetYM]) wSum.titleYM[targetYM] = {}
-
-      if(wSum.titleYM[targetYM][elWord]){
-        wSum.titleYM[targetYM][elWord] ++
-      }else{
-        wSum.titleYM[targetYM][elWord] = 1
-      }
-    })
-
-    if(counter >= maxDoc){
-      logg('congratulations...the result is published')
-      let comp
-      comp = await preserver('!ana-All.txt',JSON.stringify(wSum.all))
-      comp = await preserver('!ana-YM.txt',JSON.stringify(wSum.ym))
-      comp = await preserver('!ana-titleAll.txt',JSON.stringify(wSum.titleAll))
-      comp = await preserver('!ana-titleYM.txt',JSON.stringify(wSum.titleYM))
-      if(comp){
-        process.exit()
-      }
-    }
-
-
-  }
+async function mecabAsync(text){
+  let res = await analyzeText(text)
+  return new Promise((resolve,reject)=>{
+    logg(res.slice(0,4))
+    return resolve(res)
+  })
 }
 
 
