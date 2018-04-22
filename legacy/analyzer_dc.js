@@ -2,8 +2,6 @@
 //
 //  this code is no longer used due to async/await misdirection
 //
-//
-//
 */
 
 //Previously made mecab-mod.js

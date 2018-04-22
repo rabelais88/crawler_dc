@@ -4,12 +4,23 @@ const http = require('http').Server(app)
 const fs = require('fs')
 const dirPub = '/pub'
 const bodyParser = require('body-parser')
+let datalist = []
 
+/*
 const MongoClient = require('mongodb').MongoClient
 const MongoUrl = 'mongodb://localhost:27017/'
 const MongoDBname = 'crawler_dc'
 const MongoCollection = 'gallery_aoe'
 let db = ''
+
+
+MongoClient.connect(MongoUrl,(err,client)=>{
+  if(err) throw err
+  console.log('connected to mongoDB')
+  db = client.db(MongoDBname)
+})
+
+*/
 
 http.listen(3002,function (){
   console.log('server is up at ' + this.address().port)
@@ -17,6 +28,7 @@ http.listen(3002,function (){
 })
 
 app.use(dirPub,express.static(__dirname + dirPub))
+app.use(dirPub,express.static(__dirname + dirPub + '/data'))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended:false}))
 
@@ -26,12 +38,7 @@ app.get('/',(req,res)=>{
   })
 })
 
-MongoClient.connect(MongoUrl,(err,client)=>{
-  if(err) throw err
-  console.log('connected to mongoDB')
-  db = client.db(MongoDBname)
-})
-
+/*
 app.get('/dataword.json',(req,res)=>{
   const targetPeriod = req.params.period ? req.params.period : 'All'
   console.log('data requested on period',targetPeriod )
@@ -46,3 +53,17 @@ app.get('/dataword.json',(req,res)=>{
     res.json(words)
   })
 })
+*/
+
+
+fs.readdir(__dirname + '/pub/data',(err,files)=>{
+  datalist = files.filter(el=>
+    el.endsWith('.json')
+  )
+})
+
+app.get('/datalist.json',(req,res)=>{
+  res.json(datalist)
+})
+
+

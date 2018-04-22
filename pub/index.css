@@ -1,3 +1,7 @@
+@import url('https://fonts.googleapis.com/css?family=Do+Hyeon|Gothic+A1');
+*{
+  font-family: 'Gothic A1', sans-serif;
+}
 
 .chart{
   padding:20px;
@@ -19,4 +23,13 @@
   content:' ';
   color:white;
   height:80%;
+}
+
+h1{
+  font-family: 'Do Hyeon', sans-serif;
+}
+
+select{
+  padding:10px;
+  border-radius:2px;
 }

@@ -16,9 +16,9 @@ const myapp = new Vue({
         ['상위 50개',50],
         ['상위 100개',100]
       ],
-      filterPeriods:['All period', '2018-03'],
+      filterPeriods:[['모든 기간','all']],
       filterTop:10,
-      filterPeriod:'All period'
+      filterPeriod:'all'
     }
   },
   computed:{
@@ -35,6 +35,13 @@ const myapp = new Vue({
       return{
         width: Math.ceil(elValue / this.wordmax * 100) + '%'
       }
+    },
+    changePeriod(){
+      console.log('period changed:' + this.filterPeriod)
+      Vue.axios.get('/pub/data/' + this.filterPeriod).then(res=>{
+        console.log(res.data)
+        this.wordranksRaw = res.data.words
+      })
     }
   },
   template:`
@@ -46,8 +53,8 @@ const myapp = new Vue({
       <option v-for="(elTop, idx) in filterTops" :key="idx" :value="elTop[1]">{{elTop[0]}}</option>
     </select>
 
-    <select v-model="filterPeriod">
-      <option v-for="(elPeriod, idx) in filterPeriods" :key="idx" >{{elPeriod}}</option>
+    <select v-model="filterPeriod" @change="changePeriod">
+      <option v-for="(elPeriod, idx) in filterPeriods" :key="idx" :value="elPeriod[1]">{{elPeriod[0]}}</option>
     </select>
 
     <div class="chart">
@@ -60,13 +67,20 @@ const myapp = new Vue({
     </div>
   </div>`,
   mounted(){
-    Vue.axios.get('/dataword.json').then((res)=>{
+    Vue.axios.get('/dataword.json').then(res=>{
       //console.log(res.data)
       this.wordranksRaw = res.data
     })
 
-    Vue.axios.get('/dataword.json?period=201810').then((res)=>{
-      console.log(res.data)
+
+    //list test
+
+    Vue.axios.get('/datalist.json').then(res=>{
+      //console.log('available data list: ', res.data)
+      res.data = res.data.map(el=>
+        [`${el.substr(0,4)}년 ${el.substr(4,2)}월`,el]
+      )
+      this.filterPeriods = [...this.filterPeriods, ...res.data]
     })
   }
 })
