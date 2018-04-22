@@ -4,7 +4,8 @@ const http = require('http').Server(app)
 const fs = require('fs')
 const dirPub = '/pub'
 const bodyParser = require('body-parser')
-let datalist = []
+const galleries = require('./pub/data/alias.json')
+let datatrees={}
 
 /*
 const MongoClient = require('mongodb').MongoClient
@@ -22,15 +23,15 @@ MongoClient.connect(MongoUrl,(err,client)=>{
 
 */
 
-http.listen(3002,function (){
+
+app.use(dirPub,express.static(__dirname + dirPub))
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({extended:false}))
+
+http.listen(5000,function (){
   console.log('server is up at ' + this.address().port)
   console.log('mode:' + process.env.NODE_ENV)
 })
-
-app.use(dirPub,express.static(__dirname + dirPub))
-app.use(dirPub,express.static(__dirname + dirPub + '/data'))
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended:false}))
 
 app.get('/',(req,res)=>{
   fs.readFile('.' + dirPub + '/index.html',{encoding:'utf-8'},(err,dataHtml)=>{
@@ -55,15 +56,19 @@ app.get('/dataword.json',(req,res)=>{
 })
 */
 
-
-fs.readdir(__dirname + '/pub/data',(err,files)=>{
-  datalist = files.filter(el=>
-    el.endsWith('.json')
-  )
+Object.keys(galleries).map(elGallery=>{
+  fs.readdir(__dirname + '/pub/data/' + elGallery,(err,files)=>{
+    datatrees[elGallery] = files.filter(el=>
+      el.endsWith('.json')
+    )
+  })
 })
 
 app.get('/datalist.json',(req,res)=>{
-  res.json(datalist)
+  console.log('targetgallery=',req.query.gallery)
+  if(req.query.gallery){
+    res.json(datatrees[req.query.gallery])
+  }
 })
 
 

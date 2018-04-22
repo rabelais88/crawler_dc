@@ -10,7 +10,8 @@ const myapp = new Vue({
   data(){
     return{
       wordranksRaw:[],
-      title:'고갤 인기 단어 순위',
+      currentGallery:'',
+      galleries:{},
       filterTops:[
         ['상위 10개',10],
         ['상위 50개',50],
@@ -28,6 +29,10 @@ const myapp = new Vue({
     },
     wordranks(){
       return this.wordranksRaw.slice(0,this.filterTop) //top XXth
+    },
+    galleriesList(){
+      return Object.keys(this.galleries).map(elKey=>
+        [elKey, this.galleries[elKey]])
     }
   },
   methods:{
@@ -38,17 +43,32 @@ const myapp = new Vue({
     },
     changePeriod(){
       console.log('period changed:' + this.filterPeriod)
-      Vue.axios.get('/pub/data/' + this.filterPeriod).then(res=>{
-        console.log(res.data)
+      Vue.axios.get('/pub/data/' + this.currentGallery + '/' + this.filterPeriod).then(res=>{
         this.wordranksRaw = res.data.words
+      })
+    },
+    changeGallery(){
+      console.log('gallery request')
+      Vue.axios.get('/datalist.json?gallery=' + this.currentGallery).then(res=>{
+        this.filterPeriods = res.data.map(el=>
+          el === 'all' ? ['모든 기간',all] :
+          [`${el.substr(0,4)}년 ${el.substr(4,2)}월`,el]
+        )
+        this.filterPeriod = this.filterPeriods[0][1]
+        this.changePeriod()
       })
     }
   },
   template:`
   <div>
-    <h1>{{title}}</h1>
+    <h1>{{galleries[currentGallery]}} 인기 단어 순위</h1>
     <br>
-    {{filterTop}} {{filterPeriod}}
+    {{filterTop}} {{filterPeriod}}<br>
+    
+    <select v-model="currentGallery" @change="changeGallery">
+      <option v-for="(elGallery,idx) in galleriesList" :key="idx" :value="elGallery[0]">{{elGallery[1]}}</option>
+    </select>
+    
     <select v-model="filterTop">
       <option v-for="(elTop, idx) in filterTops" :key="idx" :value="elTop[1]">{{elTop[0]}}</option>
     </select>
@@ -56,7 +76,7 @@ const myapp = new Vue({
     <select v-model="filterPeriod" @change="changePeriod">
       <option v-for="(elPeriod, idx) in filterPeriods" :key="idx" :value="elPeriod[1]">{{elPeriod[0]}}</option>
     </select>
-
+    <div id="wordcloud"></div>
     <div class="chart">
       <div class="elChart" v-for="(elWord, idx) in wordranks" :key="idx">
         <p>{{idx + 1}}.{{elWord[0]}}</p>
@@ -67,20 +87,11 @@ const myapp = new Vue({
     </div>
   </div>`,
   mounted(){
-    Vue.axios.get('/dataword.json').then(res=>{
-      //console.log(res.data)
-      this.wordranksRaw = res.data
+    Vue.axios.get('/pub/data/alias.json').then(res=>{
+      this.galleries = res.data
+      this.currentGallery = Object.keys(res.data)[0]
+      this.changeGallery()
     })
 
-
-    //list test
-
-    Vue.axios.get('/datalist.json').then(res=>{
-      //console.log('available data list: ', res.data)
-      res.data = res.data.map(el=>
-        [`${el.substr(0,4)}년 ${el.substr(4,2)}월`,el]
-      )
-      this.filterPeriods = [...this.filterPeriods, ...res.data]
-    })
   }
 })
