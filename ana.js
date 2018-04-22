@@ -129,11 +129,24 @@ function getMorpheme(txt){
   }
 
   logg(`analyze finished -- ${moment().format('YYYY-MM-DD hh:mm:ss')}`)
-  await preserver('!ana-All.txt',JSON.stringify(wsum.all))
-  await preserver('!ana-titleAll.txt',JSON.stringify(wsum.titleAll))
-  await preserver('!ana-YM.txt',JSON.stringify(wsum.ym))
-  await preserver('!ana-titleYM.txt',JSON.stringify(wsum.titleYM))
-  logg(`db insert finished -- ${moment().format('YYYY-MM-DD hh:mm:ss')}`)
+
+  if (!fs.existsSync('/data/' + preset.public.targetGallery)) fs.mkdirSync('/data/' + preset.public.targetGallery);
+  await preserver(`/data/${preset.public.targetGallery}/titleAll.json`,JSON.stringify(wsum.titleAll))
+  await preserver(`/data/${preset.public.targetGallery}/all.json`,JSON.stringify(wsum.all))
+  for(let i = 0; i < Object.keys(wsum.ym).length; i++){
+    let elKey = Object.keys(wsum.ym)
+
+    let dataSortable = Object.keys(wsum.ym[elKey]).map(el=>
+      [el,dataAll[el]]
+    ).filter(el=>el[1] > 9).sort((a,b)=>b[1] - a[1])
+
+    await preserver(`data/${preset.public.targetGallery}/${elKey}.json`,JSON.stringify({words:dataSortable}))
+  }
+
+  //await preserver('!ana-titleAll.txt',JSON.stringify(wsum.titleAll))
+  //await preserver('!ana-YM.txt',JSON.stringify(wsum.ym))
+  //await preserver('!ana-titleYM.txt',JSON.stringify(wsum.titleYM))
+  logg(`data preservation finished -- ${moment().format('YYYY-MM-DD hh:mm:ss')}`)
 
   process.exit()
 })();

@@ -5,7 +5,7 @@
   },
   "logfileName":"crawler.log",
   "targetGallery":"aoegame",
-  "title":"aoe gallery",
+  "title":"고전게임(고갤)",
   "pageMin":1,
   "pageMax":1,
   "windowMax":7
