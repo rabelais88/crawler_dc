@@ -34,7 +34,8 @@
     "webpack-cli": "^2.0.14"
   },
   "scripts": {
-    "run": "webpack --mode production && node server.js",
+    "postinstall":"webpack --mode production",
+    "start": "node server.js",
     "1": "env DEBUG='puppeteer:*,-puppeteer:session,-puppeteer:protocol,-puppeteer:request,-puppeteer:frame,-puppeteer:target' node crawler_dc.js -simple",
     "2": "sudo node analyzer.js -simple",
     "3": "rm -rf *.log && node crawler_dc.js -simple -page 1 30 && node crawler_dc.js -simple -page 31 60 && node crawler_dc.js -simple -page 61 90 && node crawler_dc.js -simple -page 91 120 && node crawler_dc.js -simple -page 121 150 && node crawler_dc.js -simple -page 151 180 && node crawler_dc.js -simple -page 181 196",
