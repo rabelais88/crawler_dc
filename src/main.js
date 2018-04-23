@@ -15,9 +15,9 @@ const myapp = new Vue({
       currentGallery:'',
       galleries:{},
       filterTops:[
-        ['상위 10개',10],
-        ['상위 50개',50],
-        ['상위 100개',100]
+        ['상위 10개(Top 10)',10],
+        ['상위 50개(Top 50)',50],
+        ['상위 100개(Top 100)',100]
       ],
       filterPeriods:[['모든 기간','all']],
       filterTop:10,
@@ -53,12 +53,12 @@ const myapp = new Vue({
       console.log('gallery request')
       Vue.axios.get('/datalist.json?gallery=' + this.currentGallery).then(res=>{
         this.filterPeriods = res.data.map(el=>{
-          if( el === 'all.json') return ['모든 기간 - 본문',el]
-          else if (el === 'titleAll.json') return ['모든 기간 - 제목',el]
+          if( el === 'all.json') return ['모든 기간 - 본문 All Periods-Contents only',el]
+          else if (el === 'titleAll.json') return ['모든 기간 - 제목 All Periods-Titles only',el]
           else {
             let newName = [`${el.substr(0,4)}년 ${el.substr(4,2)}월`,el]
-            if(el.includes('title')) newName[0] += ' - 제목'
-            else newName[0] += '- 본문'
+            if(el.includes('title')) newName[0] += ' - 제목 Title'
+            else newName[0] += ' - 본문 Content'
             return newName
           }
         })
@@ -70,8 +70,9 @@ const myapp = new Vue({
   template:`
   <div>
     <h1>{{galleries[currentGallery]}} 인기 단어 순위</h1>
+    <h2>most frequently used word of {{galleries[currentGallery]}}</h2>
+
     <br>
-    {{filterTop}} {{filterPeriod}}<br>
     
     <vue-word-cloud
       :words="wordranks"
