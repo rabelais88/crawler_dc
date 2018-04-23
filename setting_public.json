@@ -1,12 +1,12 @@
 {
   "mongo":{
     "DBname":"crawler_dc",
-    "collection":"gallery_aoe"
+    "collection":"baseball_new6"
   },
   "logfileName":"crawler.log",
-  "targetGallery":"aoegame",
+  "targetGallery":"baseball_new6",
   "title":"고전게임(고갤)",
   "pageMin":1,
-  "pageMax":1,
+  "pageMax":7,
   "windowMax":7
 }

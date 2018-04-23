@@ -20,7 +20,6 @@ const winston = require('winston')
 const moment = require('moment')
 
 const preserver = require('./preserver.js')
-const fs = require('fs')
 
 const logger = winston.createLogger({
   transports:[
@@ -66,7 +65,6 @@ function getMorpheme(txt){
 }
 
 
-
 ;(async function bootup(){
   logg('A N A L Y Z E --------------------------------------------------------------------------')
   logg(`analyze started -- ${moment().format('YYYY-MM-DD hh:mm:ss')}`)
@@ -74,20 +72,14 @@ function getMorpheme(txt){
   const db = client.db(MongoDBname)
   const cursor = await db.collection(MongoCollection).find({date:{$exists:true}}) //avoid any corrupted data
   const maxDoc = await cursor.count()
-
-  //next time, don't process anything with "await" when running mongoDB....
-
-
   let count = 0
   let analyzePlan = []
   logg(`max document ${maxDoc}`)
 
   //do the work sequentially
 
-  const rawDB = await cursor.toArray()
-
-  for(let z = 0;z < rawDB.length; z++ ) {
-    let doc = rawDB[z]
+  while ( await cursor.hasNext() ) {
+    let doc = await cursor.next()
     count++
     //console.log(count, doc.text)
     if(!simpleMode){
@@ -102,16 +94,8 @@ function getMorpheme(txt){
     if(!wsum.titleYM[docDate]) wsum.titleYM[docDate] = {}
 
     //title
-    let contentWords = filterMorpheme(await getMorpheme(doc.text))
-    let titleWords = filterMorpheme(await getMorpheme(doc.content))
-
-    let words = []
-    for(let i = 0;i< titleWords.length; i++){
-      if(words.indexOf(titleWords[i]) === -1) words.push(titleWords[i])
-    }
-
+    let words = filterMorpheme(await getMorpheme(doc.text))
     if(words.length > 1 && !simpleMode) console.log(`analyzed from title ${words.slice(0,4)}`)
-    
     for(let i = 0; i<words.length;i++){
       let word = words[i]
       if(wsum.titleAll[word]){
@@ -129,11 +113,7 @@ function getMorpheme(txt){
     }
     
     //content
-    words = []
-    for(let i = 0;i< contentWords.length; i++){
-      if(words.indexOf(contentWords[i]) === -1) words.push(contentWords[i])
-    }
-
+    words = filterMorpheme(await getMorpheme(doc.content))
     if(words.length > 1 && !simpleMode) console.log(`analyzed from content ${words.slice(0,4 )}`)
     for(let i = 0; i < words.length;i++){
       let word = words[i]
@@ -149,48 +129,42 @@ function getMorpheme(txt){
         wsum.ym[docDate][word] = 1
       }
     }
-
-
   }
 
   logg(`analyze finished -- ${moment().format('YYYY-MM-DD hh:mm:ss')}`)
 
-  if (!fs.existsSync(__dirname + '/pub/data/' + preset.public.targetGallery)) fs.mkdirSync(__dirname + '/pub/data/' + preset.public.targetGallery);
+  if (!fs.existsSync('/data/' + preset.public.targetGallery)) fs.mkdirSync('/data/' + preset.public.targetGallery);
 
   wsum.titleAll = sortNlist(wsum.titleAll)
   wsum.all = sortNlist(wsum.all)
 
-  console.log('targetdirectory', __dirname + `/data/${preset.public.targetGallery}/titleAll.json`)
-  await preserver(`pub/data/${preset.public.targetGallery}/titleAll.json`,JSON.stringify({words:wsum.titleAll}))
-  await preserver(`pub/data/${preset.public.targetGallery}/all.json`,JSON.stringify({words:wsum.all}))
-
-  //console.log(wsum.ym)
+  await preserver(`/data/${preset.public.targetGallery}/titleAll.json`,JSON.stringify({words:sortNlist(wsum.titleAll)}))
+  await preserver(`/data/${preset.public.targetGallery}/all.json`,JSON.stringify({words:sortNlist(wsum.all)}))
+  
   for(let i = 0; i < Object.keys(wsum.ym).length; i++){
 
-    let elKey = Object.keys(wsum.ym)[i]
+    let elKey = Object.keys(wsum.ym)
 
     wsum.ym[elKey] = sortNlist(wsum.ym[elKey])
     wsum.titleYM[elKey] = sortNlist(wsum.titleYM[elKey])
-    await preserver(`pub/data/${preset.public.targetGallery}/${elKey}.json`,JSON.stringify({words:wsum.ym[elKey]}))
-    await preserver(`pub/data/${preset.public.targetGallery}/${elKey}title.json`,JSON.stringify({words:wsum.titleYM[elKey]}))
+
+    await preserver(`data/${preset.public.targetGallery}/${elKey}.json`,JSON.stringify({words:wsum.ym[elKey]}))
+    await preserver(`data/${preset.public.targetGallery}/${elKey}title.json`,JSON.stringify({words:wsum.titleYM[elKey]}))
   }
-
-
-
-
 
   //await preserver('!ana-titleAll.txt',JSON.stringify(wsum.titleAll))
   //await preserver('!ana-YM.txt',JSON.stringify(wsum.ym))
   //await preserver('!ana-titleYM.txt',JSON.stringify(wsum.titleYM))
   logg(`data preservation finished -- ${moment().format('YYYY-MM-DD hh:mm:ss')}`)
-
+  cursor.close()
+  process.exit()
 })();
 
 function sortNlist(target){
   let dataSortable = Object.keys(target).map(elKey=>
     [elKey,target[elKey]]
   ).filter(el=>el[1] > 9).sort((a,b)=>b[1] - a[1])
-
+  console.log(dataSortable)
   return dataSortable
 
 }

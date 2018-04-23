@@ -2,7 +2,9 @@ import Vue from 'vue'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
 import 'babel-polyfill'
+import VueWordCloud from 'vuewordcloud';
 
+Vue.component(VueWordCloud.name, VueWordCloud);
 Vue.use(VueAxios, axios)
 
 const myapp = new Vue({
@@ -51,10 +53,12 @@ const myapp = new Vue({
       console.log('gallery request')
       Vue.axios.get('/datalist.json?gallery=' + this.currentGallery).then(res=>{
         this.filterPeriods = res.data.map(el=>{
-          if( el === 'all') return ['모든 기간',all]
+          if( el === 'all.json') return ['모든 기간 - 본문',el]
+          else if (el === 'titleAll.json') return ['모든 기간 - 제목',el]
           else {
             let newName = [`${el.substr(0,4)}년 ${el.substr(4,2)}월`,el]
             if(el.includes('title')) newName[0] += ' - 제목'
+            else newName[0] += '- 본문'
             return newName
           }
         })
@@ -69,6 +73,11 @@ const myapp = new Vue({
     <br>
     {{filterTop}} {{filterPeriod}}<br>
     
+    <vue-word-cloud
+      :words="wordranks"
+      :color="([, weight]) => weight > 10 ? 'DeepPink' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
+    ></vue-word-cloud>
+
     <select v-model="currentGallery" @change="changeGallery">
       <option v-for="(elGallery,idx) in galleriesList" :key="idx" :value="elGallery[0]">{{elGallery[1]}}</option>
     </select>
@@ -95,6 +104,7 @@ const myapp = new Vue({
       this.galleries = res.data
       this.currentGallery = Object.keys(res.data)[0]
       this.changeGallery()
+      VueWordCloud.createCanvas()
     })
 
   }

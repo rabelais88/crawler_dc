@@ -5806,6 +5806,12 @@ vuetify@^1.0.14:
   version "1.0.14"
   resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-1.0.14.tgz#ab1f0e702383f66f9d320fd8e1cd2d63e7871e0b"
 
+vuewordcloud@^18.4.6:
+  version "18.4.6"
+  resolved "https://registry.yarnpkg.com/vuewordcloud/-/vuewordcloud-18.4.6.tgz#18b7f0f78ade720ae9b7935f94b54402a19ede0f"
+  dependencies:
+    vue "^2.5.16"
+
 watchpack@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/watchpack/-/watchpack-1.5.0.tgz#231e783af830a22f8966f65c4c4bacc814072eed"

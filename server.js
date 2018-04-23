@@ -28,7 +28,7 @@ app.use(dirPub,express.static(__dirname + dirPub))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended:false}))
 
-http.listen(5000,function (){
+http.listen(process.env.PORT || 5000,function (){
   console.log('server is up at ' + this.address().port)
   console.log('mode:' + process.env.NODE_ENV)
 })
