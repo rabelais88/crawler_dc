@@ -50,10 +50,14 @@ const myapp = new Vue({
     changeGallery(){
       console.log('gallery request')
       Vue.axios.get('/datalist.json?gallery=' + this.currentGallery).then(res=>{
-        this.filterPeriods = res.data.map(el=>
-          el === 'all' ? ['모든 기간',all] :
-          [`${el.substr(0,4)}년 ${el.substr(4,2)}월`,el]
-        )
+        this.filterPeriods = res.data.map(el=>{
+          if( el === 'all') return ['모든 기간',all]
+          else {
+            let newName = [`${el.substr(0,4)}년 ${el.substr(4,2)}월`,el]
+            if(el.includes('title')) newName[0] += ' - 제목'
+            return newName
+          }
+        })
         this.filterPeriod = this.filterPeriods[0][1]
         this.changePeriod()
       })
