@@ -3,14 +3,22 @@
   font-family: 'Gothic A1', sans-serif;
 }
 
+.title{
+  padding:20px;
+}
+
 .chart{
   padding:20px;
 }
 .elChart {
+  height:40px;
   display:flex;
 }
 .elChart > p{
   width:10%;
+  min-width:100px;
+  text-align:right;
+  padding-right:20px;
 }
 .elChart > div{
   flex-grow:1;
@@ -22,14 +30,44 @@
   background-color:#361d8f;
   content:' ';
   color:white;
-  height:30%;
+  height:70%;
 }
 
-h1{
+h1,h2{
   font-family: 'Do Hyeon', sans-serif;
 }
 
 select{
   padding:10px;
   border-radius:2px;
+}
+
+.filters{
+  display:flex;
+  justify-content:center;
+
+}
+
+hr{
+  border:none;
+  border-top:solid 1px black;
+  margin:20px;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
+
+a{
+  color:darkslategray;
+  transition:.5s;
+}
+
+a:hover{
+  transition:.5s;
+  background-color:darkslategray;
+  color:white;
 }

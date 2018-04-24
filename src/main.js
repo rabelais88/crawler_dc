@@ -15,9 +15,9 @@ const myapp = new Vue({
       currentGallery:'',
       galleries:{},
       filterTops:[
-        ['상위 10개(Top 10)',10],
-        ['상위 50개(Top 50)',50],
-        ['상위 100개(Top 100)',100]
+        ['상위 10개 - Top 10',10],
+        ['상위 50개 - Top 50',50],
+        ['상위 100개 - Top 100',100]
       ],
       filterPeriods:[['모든 기간','all']],
       filterTop:10,
@@ -62,6 +62,7 @@ const myapp = new Vue({
             return newName
           }
         })
+        this.filterPeriods.reverse()
         this.filterPeriod = this.filterPeriods[0][1]
         this.changePeriod()
       })
@@ -69,41 +70,51 @@ const myapp = new Vue({
   },
   template:`
   <div>
-    <h1>{{galleries[currentGallery]}} 인기 단어 순위</h1>
-    <h2>most frequently used word of {{galleries[currentGallery]}}</h2>
+    <div class="title">
+      <h1>{{galleries[currentGallery]}} 인기 단어 순위</h1>
+      <h2>most frequently used words of {{galleries[currentGallery]}}</h2>
+      <p>숫자는 각 글에서 한번 이상 언급된 횟수 기준.</p>
+      <p>The numbers are based on the occurence of words at least once in each document</p>
+      <p>web scraping & data analysis project - sungryeolp@gmail.com <a href="http://sungryeol.com">http://sungryeol.com</a> (Sungryeol Park)</p>
+      <p>Node.js + Vue.js + Puppeteer(Headless-Chrome) + Mecab-KO(Morpheme Analyzer)</p>
+      <p>Data scraped around 2018.4.21 ~ 24</p>
+    </div>
+    <hr>
 
-    <br>
-    
-    <vue-word-cloud
-      :words="wordranks"
-      :color="([, weight]) => weight > 10 ? 'DeepPink' : weight > 5 ? 'RoyalBlue' : 'Indigo'"
-    ></vue-word-cloud>
+    <div class="filters">
+      <select v-model="currentGallery" @change="changeGallery">
+        <option v-for="(elGallery,idx) in galleriesList" :key="idx" :value="elGallery[0]">{{elGallery[1]}}</option>
+      </select>
+      
+      <select v-model="filterTop">
+        <option v-for="(elTop, idx) in filterTops" :key="idx" :value="elTop[1]">{{elTop[0]}}</option>
+      </select>
 
-    <select v-model="currentGallery" @change="changeGallery">
-      <option v-for="(elGallery,idx) in galleriesList" :key="idx" :value="elGallery[0]">{{elGallery[1]}}</option>
-    </select>
-    
-    <select v-model="filterTop">
-      <option v-for="(elTop, idx) in filterTops" :key="idx" :value="elTop[1]">{{elTop[0]}}</option>
-    </select>
+      <select v-model="filterPeriod" @change="changePeriod">
+        <option v-for="(elPeriod, idx) in filterPeriods" :key="idx" :value="elPeriod[1]">{{elPeriod[0]}}</option>
+      </select>
+    </div>
 
-    <select v-model="filterPeriod" @change="changePeriod">
-      <option v-for="(elPeriod, idx) in filterPeriods" :key="idx" :value="elPeriod[1]">{{elPeriod[0]}}</option>
-    </select>
-    <div id="wordcloud"></div>
-    <div class="chart">
+    <hr>
+
+    <transition-group class="chart" name="fade" tag="div">
       <div class="elChart" v-for="(elWord, idx) in wordranks" :key="idx">
         <p>{{idx + 1}}.{{elWord[0]}}</p>
         <div>
           <div :style="barstyle(elWord[1])">{{elWord[1]}}</div>
         </div>
       </div>
-    </div>
+    </transition-group>
   </div>`,
   mounted(){
+    //get query string and refer to it
+    let uri = window.location.search.substring(1); 
+    let params = new URLSearchParams(uri);
+    let gallery = params.get("gallery")
+
     Vue.axios.get('/pub/data/alias.json').then(res=>{
       this.galleries = res.data
-      this.currentGallery = Object.keys(res.data)[0]
+      this.currentGallery = gallery ? gallery : Object.keys(res.data)[0]
       this.changeGallery()
       VueWordCloud.createCanvas()
     })

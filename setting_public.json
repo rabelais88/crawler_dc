@@ -1,12 +1,13 @@
 {
   "mongo":{
     "DBname":"crawler_dc",
-    "collection":"baseball_new6"
+    "collection":"bitcoins"
   },
   "logfileName":"crawler.log",
-  "targetGallery":"baseball_new6",
+  "targetGallery":"bitcoins",
   "title":"고전게임(고갤)",
   "pageMin":1,
   "pageMax":7,
-  "windowMax":7
+  "windowMax":7,
+  "targetUrl":"http://gall.dcinside.com/board/lists/?id=bitcoins&exception_mode=recommend&page="
 }

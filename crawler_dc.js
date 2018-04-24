@@ -40,14 +40,21 @@ const assert = require('assert')
 const logfile = preset.public.logfileName
 
 const targetGallery = preset.public.targetGallery
-
+const preserver = require('./preserver.js')
 
 
 //too much data from below address
 //const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&page=`
 
 //limited data amount by redirecting to different URL
-const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
+
+//if wrong target directory has been used, the data will get corrupted
+// --------------------for aoegame gallery
+// const targetUrl = `http://gall.dcinside.com/mgallery/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
+// --------------------for other gallery
+// const targetUrl = `http://gall.dcinside.com/board/lists/?id=${targetGallery}&exception_mode=recommend&page=`
+
+const targetUrl = preset.public.targetUrl
 let pageMin = preset.public.pageMin
 let pageMax = preset.public.pageMax //limit it to 20~30 pages at once since it may cause hang & RAM errors
 //!!!detrimental for RAM consumption & performance
@@ -119,12 +126,12 @@ async function scrapePage(browser,targetUrl,pageNo){
         return { text: el.innerText, href:el.href, comment:0 } })
     }, '.t_subject > a')
     titles = titles.filter((el,i)=>{
-      if(/\[\d+\]/g.test(el.text)){
+      if(/\[([\d\/]+)\]/g.test(el.text)){
         //if it's a comment number
-        titles[i - 1].comment = Math.ceil(/\[(\d+)\]/g.exec(el.text)[1]) //Math.ceil is safer than parseint
+        titles[i - 1].comment = Math.ceil(/\[([\d\/]+)\]/g.exec(el.text)[1]) //Math.ceil is safer than parseint
         return false
       }else{
-        return el.text
+        return true
       }
     })
 
@@ -149,8 +156,7 @@ async function scrapePage(browser,targetUrl,pageNo){
     titles.map(el=>{
       const articleId = /&no=(\d+)/g.exec(el.href) //this could return null because sometimes they have different type of url
       if(!simpleMode) logg(`scraped address - ${articleId ? articleId[1] : 'wrongid'} - ${moment().format('YYYY/MM/DD hh:mm:ss')}`)
-
-      if(articleId) convertedTitles[articleId[1]] = el //null test is necessary!
+      if(articleId && el.author != "운영자" && articleId[1] != "1") convertedTitles[articleId[1]] = el //null test is necessary!
     })
     if(page) await page.close()
     return new Promise((resolve,reject)=>resolve(convertedTitles))
@@ -191,9 +197,11 @@ async function scrapeArticle(browser,articleUrl,articleId){
       logg('dialog: ', dialog.message(), '- this will be dismissed')
       await dialog.dismiss()
     })
-
-    await page.goto(articleUrl, {timeout: 3000000}) //timeouts will be disabled
-
+    try{
+      await page.goto(articleUrl, {timeout: 3000000}) //timeouts will be disabled
+    }catch(e){
+      warnn('wrong url detected on ' + articleId + '...' + articleUrl)
+    }
     let paragraphs = await page.evaluate((selector)=>
       [...document.querySelectorAll(selector)].map(el=>
     el.innerText),'.s_write p, .s_write div')
@@ -262,13 +270,16 @@ async function bootup(){
     if(countLimit % windowMax === 0 || i === pageMax) {
       //if the counter reaches the maximum number of windows, run scraping at once
       let resPage = await Promise.all(pageScrapePlan)
-      resPage.map(elScrappedFromPage=>{
-        scraped = {...scraped,...elScrappedFromPage}
-      })
-
+      for(let y = 0; y < resPage.length; y++){
+        if(!simpleMode) logg('for wrong page detection- ' + JSON.stringify(resPage[y]))
+        scraped = {...scraped , ...resPage[y]}
+      }
       pageScrapePlan = []
     }
   }
+
+  //logg(scraped)
+  await preserver('debug-scraped.tmp',JSON.stringify(scraped))
 
   //multiple articles are scraped at once
   const scrapedKeys = Object.keys(scraped)
@@ -280,8 +291,10 @@ async function bootup(){
     prevTime = now
     let targetList = scrapedKeys.slice(i*windowMax, i*windowMax + windowMax)
     let scrapePlan = targetList.map(el=>{
-      return scrapeArticle(browser,scraped[el].href,el)
-    })
+      if(/.*gall\.dcinside\.com.+/g.test(scraped[el].href))
+        return scrapeArticle(browser,scraped[el].href,el)
+      else warnn('!!!!wrong url has been detected ... ' + scraped[el].href)
+    }).filter(el=>el)
     let scrapedPara = await Promise.all(scrapePlan)
 
     //using article number as key, this removes all duplicates
