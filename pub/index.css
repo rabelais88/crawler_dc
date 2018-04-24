@@ -71,3 +71,7 @@ a:hover{
   background-color:darkslategray;
   color:white;
 }
+
+.disqusWrapper{
+  margin:40px;
+}
