@@ -2,9 +2,6 @@ import Vue from 'vue'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
 import 'babel-polyfill'
-import VueWordCloud from 'vuewordcloud';
-
-Vue.component(VueWordCloud.name, VueWordCloud);
 Vue.use(VueAxios, axios)
 
 const myapp = new Vue({
