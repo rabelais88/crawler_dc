@@ -1,6 +1,9 @@
 {
   "name": "crawler_dc",
   "version": "1.0.0",
+  "engines":{
+    "node":"8.9.4"
+  },
   "main": "server.js",
   "license": "MIT",
   "dependencies": {
